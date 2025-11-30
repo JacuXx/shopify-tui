@@ -1,0 +1,32 @@
+# Binario compilado
+shopify-tui
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Archivos de test
+*.test
+*.out
+
+# Directorios de dependencias (si usas vendor)
+/vendor/
+
+# Archivos de IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Archivos de debug
+debug.log
+*.log
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de configuración local (opcional, descomenta si no quieres subir tu config)
+# ~/.config/shopify-tui/

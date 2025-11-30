@@ -1,0 +1,153 @@
+# 🛒 Shopify TUI
+
+CLI interactivo tipo Vim para gestionar tiendas Shopify. Permite iniciar sesión, guardar tiendas y ejecutar servidores de desarrollo local de forma rápida.
+
+## ✨ Características
+
+- 🔐 **Login con Shopify** - Autenticación OAuth vía navegador
+- 📦 **Gestión de tiendas** - Guarda múltiples tiendas para acceso rápido
+- 🚀 **Theme Dev** - Inicia el servidor de desarrollo con un Enter
+- ⌨️ **Navegación tipo Vim** - j/k para navegar, Enter para seleccionar
+
+## 📁 Estructura del Proyecto
+
+```
+shopify-tui/
+├── main.go      # Punto de entrada
+├── model.go     # Estado de la app (Model)
+├── update.go    # Manejo de eventos (Update)
+├── view.go      # Renderizado de UI (View)
+├── store.go     # Persistencia JSON
+├── commands.go  # Ejecución de Shopify CLI
+├── go.mod       # Dependencias
+└── go.sum       # Checksums
+```
+
+## 🚀 Instalación
+
+### Requisitos
+- Go 1.21 o superior
+- Shopify CLI instalado (`npm install -g @shopify/cli`)
+
+### Compilar
+
+```bash
+# Clonar o navegar al proyecto
+cd shopify-tui
+
+# Compilar
+go build -o shopify-tui .
+
+# Ejecutar
+./shopify-tui
+```
+
+### Instalar globalmente
+
+```bash
+# Esto instala el binario en ~/go/bin/
+go install .
+
+# Asegúrate de tener ~/go/bin en tu PATH
+export PATH=$PATH:~/go/bin
+
+# Ahora puedes ejecutar desde cualquier lugar
+shopify-tui
+```
+
+## ⌨️ Atajos de Teclado
+
+### Menú Principal
+| Tecla | Acción |
+|-------|--------|
+| `j` / `↓` | Mover abajo |
+| `k` / `↑` | Mover arriba |
+| `Enter` | Seleccionar opción |
+| `q` | Salir |
+| `Ctrl+C` | Salir forzado |
+
+### Formulario (Agregar Tienda)
+| Tecla | Acción |
+|-------|--------|
+| `Tab` / `↓` | Siguiente campo |
+| `Shift+Tab` / `↑` | Campo anterior |
+| `Enter` | Guardar tienda |
+| `Esc` | Cancelar |
+
+### Lista de Tiendas
+| Tecla | Acción |
+|-------|--------|
+| `j` / `↓` | Mover abajo |
+| `k` / `↑` | Mover arriba |
+| `Enter` | Ejecutar theme dev |
+| `d` | Eliminar tienda |
+| `Esc` | Volver al menú |
+
+## 📂 Configuración
+
+Las tiendas se guardan en:
+```
+~/.config/shopify-tui/stores.json
+```
+
+Ejemplo del archivo:
+```json
+{
+  "tiendas": [
+    {
+      "nombre": "Mi Tienda Principal",
+      "url": "mi-tienda.myshopify.com"
+    },
+    {
+      "nombre": "Tienda de Pruebas",
+      "url": "test-store.myshopify.com"
+    }
+  ]
+}
+```
+
+## 🏗️ Arquitectura (Elm Architecture)
+
+Este proyecto usa **Bubbletea** que implementa el patrón Elm Architecture:
+
+```
+┌─────────┐
+│  MODEL  │ ← Estado de la app (tiendas, vista actual, etc.)
+└────┬────┘
+     │
+     ▼
+┌─────────┐
+│  VIEW   │ ← Convierte el Model en UI (strings formateados)
+└────┬────┘
+     │
+     ▼ Usuario presiona tecla
+┌─────────┐
+│ UPDATE  │ ← Procesa eventos, retorna nuevo Model
+└────┬────┘
+     │
+     └──────► vuelve a MODEL (ciclo infinito)
+```
+
+### Archivos clave:
+
+- **`model.go`** - Define `struct Model` con todo el estado
+- **`view.go`** - Función `View()` que retorna strings para mostrar
+- **`update.go`** - Función `Update()` que maneja teclas y mensajes
+
+## 🔧 Dependencias
+
+- [Bubbletea](https://github.com/charmbracelet/bubbletea) - Framework TUI
+- [Bubbles](https://github.com/charmbracelet/bubbles) - Componentes (listas, inputs)
+- [Lipgloss](https://github.com/charmbracelet/lipgloss) - Estilos para terminal
+
+## 📝 Próximas mejoras
+
+- [ ] Selección de tema específico (--theme flag)
+- [ ] Múltiples directorios de trabajo por tienda
+- [ ] Historial de comandos ejecutados
+- [ ] Configuración de puerto personalizado
+- [ ] Soporte para Theme Access passwords
+
+## 📄 Licencia
+
+MIT
