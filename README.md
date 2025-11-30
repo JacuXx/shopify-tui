@@ -1,11 +1,13 @@
 # 🛒 Shopify TUI
 
-CLI interactivo tipo Vim para gestionar tiendas Shopify. Permite iniciar sesión, guardar tiendas y ejecutar servidores de desarrollo local de forma rápida.
+CLI interactivo tipo Vim para gestionar tiendas Shopify. Permite iniciar sesión, guardar tiendas con sus archivos de tema (via Shopify Pull o Git Clone) y ejecutar servidores de desarrollo local de forma rápida.
 
 ## ✨ Características
 
 - 🔐 **Login con Shopify** - Autenticación OAuth vía navegador
 - 📦 **Gestión de tiendas** - Guarda múltiples tiendas para acceso rápido
+- 📥 **Shopify Pull** - Descarga temas directamente desde Shopify
+- 🔗 **Git Clone** - Clona temas desde repositorios Git (SSH o HTTPS)
 - 🚀 **Theme Dev** - Inicia el servidor de desarrollo con un Enter
 - ⌨️ **Navegación tipo Vim** - j/k para navegar, Enter para seleccionar
 
@@ -17,8 +19,8 @@ shopify-tui/
 ├── model.go     # Estado de la app (Model)
 ├── update.go    # Manejo de eventos (Update)
 ├── view.go      # Renderizado de UI (View)
-├── store.go     # Persistencia JSON
-├── commands.go  # Ejecución de Shopify CLI
+├── store.go     # Persistencia JSON y manejo de directorios
+├── commands.go  # Ejecución de Shopify CLI y Git
 ├── go.mod       # Dependencias
 └── go.sum       # Checksums
 ```
@@ -85,26 +87,37 @@ shopify-tui
 
 ## 📂 Configuración
 
-Las tiendas se guardan en:
+Las tiendas y sus archivos se guardan en:
 ```
-~/.config/shopify-tui/stores.json
+~/.config/shopify-tui/
+├── stores.json           # Configuración de tiendas
+└── stores/               # Archivos de los temas
+    ├── mi-tienda/        # Tema de "Mi Tienda"
+    └── tienda-pruebas/   # Tema de "Tienda Pruebas"
 ```
 
-Ejemplo del archivo:
+Ejemplo del archivo `stores.json`:
 ```json
 {
   "tiendas": [
     {
       "nombre": "Mi Tienda Principal",
-      "url": "mi-tienda.myshopify.com"
+      "url": "mi-tienda.myshopify.com",
+      "ruta": "/home/usuario/.config/shopify-tui/stores/mi-tienda-principal",
+      "metodo": 0
     },
     {
-      "nombre": "Tienda de Pruebas",
-      "url": "test-store.myshopify.com"
+      "nombre": "Tienda Git",
+      "url": "tienda-git.myshopify.com",
+      "ruta": "/home/usuario/.config/shopify-tui/stores/tienda-git",
+      "metodo": 1,
+      "git_url": "git@github.com:usuario/tema.git"
     }
   ]
 }
 ```
+
+> **Nota:** `metodo: 0` = Shopify Pull, `metodo: 1` = Git Clone
 
 ## 🏗️ Arquitectura (Elm Architecture)
 
@@ -143,10 +156,10 @@ Este proyecto usa **Bubbletea** que implementa el patrón Elm Architecture:
 ## 📝 Próximas mejoras
 
 - [ ] Selección de tema específico (--theme flag)
-- [ ] Múltiples directorios de trabajo por tienda
-- [ ] Historial de comandos ejecutados
 - [ ] Configuración de puerto personalizado
 - [ ] Soporte para Theme Access passwords
+- [ ] Git pull para actualizar temas existentes
+- [ ] Opción para abrir en VS Code
 
 ## 📄 Licencia
 

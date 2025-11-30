@@ -1,6 +1,5 @@
-// commands.go - Ejecución de comandos externos (Shopify CLI)
+// commands.go - Ejecución de comandos externos (Shopify CLI y Git)
 // Este archivo contiene las funciones que ejecutan comandos de terminal
-// como 'shopify auth login' y 'shopify theme dev'
 
 package main
 
@@ -11,33 +10,23 @@ import (
 )
 
 // === MENSAJES PERSONALIZADOS ===
-// En Bubbletea, los comandos retornan "mensajes" que se procesan en Update()
-// Definimos tipos personalizados para cada resultado posible
 
 // comandoTerminadoMsg indica que un comando terminó exitosamente
 type comandoTerminadoMsg struct {
-	resultado string // Mensaje para mostrar al usuario
+	resultado string
+	tienda    *Tienda // Tienda creada (si aplica)
 }
 
 // errorMsg indica que hubo un error al ejecutar un comando
 type errorMsg struct {
-	err error // El error que ocurrió
+	err error
 }
 
-// === FUNCIONES DE COMANDOS ===
+// === COMANDOS DE SHOPIFY ===
 
 // ejecutarShopifyLogin ejecuta 'shopify auth login'
-// Usa tea.ExecProcess para permitir interacción con el browser
-// (el login de Shopify abre el navegador para OAuth)
 func ejecutarShopifyLogin() tea.Cmd {
-	// exec.Command crea un comando listo para ejecutar
 	cmd := exec.Command("shopify", "auth", "login")
-
-	// tea.ExecProcess es ESPECIAL: 
-	// - Pausa la TUI temporalmente
-	// - Deja que el comando use la terminal directamente
-	// - Cuando termina, retorna el mensaje que le indiquemos
-	// Esto es necesario para comandos interactivos como el login
 	return tea.ExecProcess(cmd, func(err error) tea.Msg {
 		if err != nil {
 			return errorMsg{err: err}
@@ -46,16 +35,26 @@ func ejecutarShopifyLogin() tea.Cmd {
 	})
 }
 
-// ejecutarThemeDev ejecuta 'shopify theme dev --store URL'
-// Este comando inicia el servidor de desarrollo local
-func ejecutarThemeDev(storeURL string) tea.Cmd {
-	// Crear el comando con los argumentos
-	cmd := exec.Command("shopify", "theme", "dev", "--store", storeURL)
+// ejecutarShopifyPull ejecuta 'shopify theme pull' en el directorio especificado
+// Descarga el tema de la tienda al directorio local
+func ejecutarShopifyPull(storeURL string, directorio string) tea.Cmd {
+	// shopify theme pull --store mi-tienda.myshopify.com --path ./
+	cmd := exec.Command("shopify", "theme", "pull", "--store", storeURL, "--path", directorio)
+	cmd.Dir = directorio // Ejecutar en el directorio de la tienda
 
-	// También usamos ExecProcess porque theme dev es interactivo:
-	// - Muestra logs en tiempo real
-	// - Responde a Ctrl+C para cerrar
-	// - Puede pedir confirmaciones
+	return tea.ExecProcess(cmd, func(err error) tea.Msg {
+		if err != nil {
+			return errorMsg{err: err}
+		}
+		return comandoTerminadoMsg{resultado: "✅ Tema descargado correctamente"}
+	})
+}
+
+// ejecutarThemeDev ejecuta 'shopify theme dev' en el directorio de la tienda
+func ejecutarThemeDev(storeURL string, directorio string) tea.Cmd {
+	cmd := exec.Command("shopify", "theme", "dev", "--store", storeURL)
+	cmd.Dir = directorio // MUY IMPORTANTE: ejecutar en el directorio del tema
+
 	return tea.ExecProcess(cmd, func(err error) tea.Msg {
 		if err != nil {
 			return errorMsg{err: err}
@@ -64,19 +63,83 @@ func ejecutarThemeDev(storeURL string) tea.Cmd {
 	})
 }
 
-// === NOTA SOBRE tea.ExecProcess vs tea.Cmd normal ===
-//
-// tea.ExecProcess: Para comandos INTERACTIVOS
-// - El comando toma control de la terminal
-// - El usuario puede interactuar (escribir, ver output en vivo)
-// - La TUI se "pausa" mientras el comando corre
-// - Ideal para: login, theme dev, vim, cualquier cosa interactiva
-//
-// tea.Cmd normal (con exec.Command().Run()): Para comandos SILENCIOSOS  
-// - El comando corre en background
-// - No se ve el output
-// - La TUI sigue activa
-// - Ideal para: verificar versiones, operaciones rápidas
-//
-// En nuestro caso, TODOS los comandos de Shopify son interactivos,
-// así que siempre usamos tea.ExecProcess
+// === COMANDOS DE GIT ===
+
+// ejecutarGitClone ejecuta 'git clone' para clonar un repositorio
+func ejecutarGitClone(gitURL string, directorio string) tea.Cmd {
+	// git clone <url> <directorio>
+	// Usamos "." para clonar en el directorio actual (que ya creamos)
+	cmd := exec.Command("git", "clone", gitURL, ".")
+	cmd.Dir = directorio
+
+	return tea.ExecProcess(cmd, func(err error) tea.Msg {
+		if err != nil {
+			return errorMsg{err: err}
+		}
+		return comandoTerminadoMsg{resultado: "✅ Repositorio clonado correctamente"}
+	})
+}
+
+// === COMANDOS COMBINADOS (para el flujo de agregar tienda) ===
+
+// ejecutarDescargaTema ejecuta la descarga del tema según el método elegido
+// y retorna un mensaje con la tienda creada para agregarla a la lista
+func ejecutarDescargaTema(tienda Tienda) tea.Cmd {
+	return func() tea.Msg {
+		// Crear el directorio para la tienda
+		directorio, err := crearDirectorioTienda(tienda.Nombre)
+		if err != nil {
+			return errorMsg{err: err}
+		}
+
+		// Actualizar la ruta de la tienda
+		tienda.Ruta = directorio
+
+		// Crear el comando según el método
+		var cmd *exec.Cmd
+		if tienda.Metodo == MetodoGitClone {
+			cmd = exec.Command("git", "clone", tienda.GitURL, ".")
+		} else {
+			cmd = exec.Command("shopify", "theme", "pull", "--store", tienda.URL, "--path", ".")
+		}
+		cmd.Dir = directorio
+
+		// Ejecutar el comando
+		// Nota: Aquí NO usamos ExecProcess porque queremos retornar la tienda
+		// En su lugar, ejecutamos directamente y manejamos el resultado
+		return tea.ExecProcess(cmd, func(err error) tea.Msg {
+			if err != nil {
+				return errorMsg{err: err}
+			}
+			return comandoTerminadoMsg{
+				resultado: "✅ Tienda configurada correctamente",
+				tienda:    &tienda,
+			}
+		})()
+	}
+}
+
+// ejecutarDescargaConExec ejecuta la descarga y toma control de la terminal
+func ejecutarDescargaConExec(tienda Tienda, directorio string) tea.Cmd {
+	var cmd *exec.Cmd
+	if tienda.Metodo == MetodoGitClone {
+		cmd = exec.Command("git", "clone", tienda.GitURL, ".")
+	} else {
+		cmd = exec.Command("shopify", "theme", "pull", "--store", tienda.URL, "--path", ".")
+	}
+	cmd.Dir = directorio
+
+	// Guardar la tienda para después
+	t := tienda
+	t.Ruta = directorio
+
+	return tea.ExecProcess(cmd, func(err error) tea.Msg {
+		if err != nil {
+			return errorMsg{err: err}
+		}
+		return comandoTerminadoMsg{
+			resultado: "✅ Tienda configurada correctamente",
+			tienda:    &t,
+		}
+	})
+}

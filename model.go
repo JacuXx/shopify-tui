@@ -14,16 +14,29 @@ import (
 type Vista int
 
 const (
-	VistaMenu             Vista = iota // 0 - Menú principal
-	VistaAgregarTienda                 // 1 - Formulario para agregar tienda
-	VistaSeleccionarTienda             // 2 - Lista de tiendas para theme dev
+	VistaMenu              Vista = iota // 0 - Menú principal
+	VistaAgregarTienda                  // 1 - Formulario para agregar tienda (nombre + url)
+	VistaSeleccionarMetodo              // 2 - Elegir método: Shopify Pull o Git Clone
+	VistaInputGit                       // 3 - Input para URL del repositorio git
+	VistaSeleccionarTienda              // 4 - Lista de tiendas para theme dev
+)
+
+// MetodoDescarga indica cómo se obtienen los archivos del tema
+type MetodoDescarga int
+
+const (
+	MetodoShopifyPull MetodoDescarga = iota // Usar shopify theme pull
+	MetodoGitClone                          // Usar git clone
 )
 
 // Tienda representa una tienda de Shopify guardada
 // Los tags `json:"..."` indican cómo se guarda en el archivo JSON
 type Tienda struct {
-	Nombre string `json:"nombre"` // Nombre descriptivo (ej: "Mi Tienda Principal")
-	URL    string `json:"url"`    // URL de la tienda (ej: "mi-tienda.myshopify.com")
+	Nombre string         `json:"nombre"`            // Nombre descriptivo (ej: "Mi Tienda Principal")
+	URL    string         `json:"url"`               // URL de la tienda (ej: "mi-tienda.myshopify.com")
+	Ruta   string         `json:"ruta"`              // Ruta local donde están los archivos del tema
+	Metodo MetodoDescarga `json:"metodo"`            // Cómo se descargaron los archivos
+	GitURL string         `json:"git_url,omitempty"` // URL del repo git (si aplica)
 }
 
 // Model contiene TODO el estado de la aplicación
@@ -36,9 +49,14 @@ type Model struct {
 	lista       list.Model      // Lista del menú principal y tiendas
 	inputNombre textinput.Model // Input para el nombre de la tienda
 	inputURL    textinput.Model // Input para la URL de la tienda
+	inputGit    textinput.Model // Input para la URL del repositorio git
 
 	// Datos
 	tiendas []Tienda // Lista de tiendas guardadas
+
+	// Estado temporal (mientras se agrega una tienda)
+	tiendaTemporal Tienda         // Tienda que se está creando
+	metodoElegido  MetodoDescarga // Método elegido para descargar
 
 	// Estado de la UI
 	mensaje     string // Mensaje de estado/error para mostrar al usuario
@@ -55,49 +73,78 @@ type itemMenu struct {
 }
 
 // Estos métodos son requeridos por la interface list.Item
-// Title() retorna el texto principal del item
-func (i itemMenu) Title() string { return i.titulo }
-
-// Description() retorna la descripción secundaria
+func (i itemMenu) Title() string       { return i.titulo }
 func (i itemMenu) Description() string { return i.desc }
-
-// FilterValue() es usado para la búsqueda/filtrado (usamos el título)
 func (i itemMenu) FilterValue() string { return i.titulo }
 
 // itemTienda representa una tienda en la lista de selección
-// También implementa list.Item
 type itemTienda struct {
 	tienda Tienda
 }
 
-func (i itemTienda) Title() string       { return i.tienda.Nombre }
-func (i itemTienda) Description() string { return i.tienda.URL }
+func (i itemTienda) Title() string { return i.tienda.Nombre }
+func (i itemTienda) Description() string {
+	metodo := "📥 pull"
+	if i.tienda.Metodo == MetodoGitClone {
+		metodo = "🔗 git"
+	}
+	return i.tienda.URL + " [" + metodo + "]"
+}
 func (i itemTienda) FilterValue() string { return i.tienda.Nombre }
 
 // modeloInicial crea y configura el estado inicial de la aplicación
-// Esta función se llama una sola vez al inicio
 func modeloInicial() Model {
 	// === Configurar input para el nombre de la tienda ===
 	inputNombre := textinput.New()
-	inputNombre.Placeholder = "Mi Tienda Principal" // Texto gris de ejemplo
-	inputNombre.CharLimit = 50                      // Máximo 50 caracteres
-	inputNombre.Width = 30                          // Ancho del input
+	inputNombre.Placeholder = "Mi Tienda Principal"
+	inputNombre.CharLimit = 50
+	inputNombre.Width = 40
 
-	// === Configurar input para la URL ===
+	// === Configurar input para la URL de Shopify ===
 	inputURL := textinput.New()
 	inputURL.Placeholder = "mi-tienda.myshopify.com"
 	inputURL.CharLimit = 100
-	inputURL.Width = 30
+	inputURL.Width = 40
+
+	// === Configurar input para URL de Git ===
+	inputGit := textinput.New()
+	inputGit.Placeholder = "git@github.com:usuario/tema.git o https://..."
+	inputGit.CharLimit = 200
+	inputGit.Width = 50
 
 	// === Crear las opciones del menú principal ===
-	items := []list.Item{
+	items := crearMenuPrincipal()
+
+	// === Crear la lista del menú ===
+	lista := list.New(items, list.NewDefaultDelegate(), 50, 14)
+	lista.Title = "🛒 Shopify TUI"
+	lista.SetShowStatusBar(false)
+	lista.SetFilteringEnabled(false)
+
+	// === Cargar tiendas guardadas del archivo JSON ===
+	tiendas, _ := cargarTiendas()
+
+	return Model{
+		vista:       VistaMenu,
+		lista:       lista,
+		inputNombre: inputNombre,
+		inputURL:    inputURL,
+		inputGit:    inputGit,
+		tiendas:     tiendas,
+		cursorInput: 0,
+	}
+}
+
+// crearMenuPrincipal retorna los items del menú principal
+func crearMenuPrincipal() []list.Item {
+	return []list.Item{
 		itemMenu{
 			titulo: "🔐 Iniciar sesión en Shopify",
 			desc:   "Abre el navegador para autenticarte con tu cuenta",
 		},
 		itemMenu{
 			titulo: "➕ Agregar tienda",
-			desc:   "Guardar una nueva tienda para acceso rápido",
+			desc:   "Guardar una nueva tienda y descargar su tema",
 		},
 		itemMenu{
 			titulo: "🚀 Ejecutar theme dev",
@@ -107,25 +154,6 @@ func modeloInicial() Model {
 			titulo: "❌ Salir",
 			desc:   "Cerrar la aplicación (o presiona q)",
 		},
-	}
-
-	// === Crear la lista del menú ===
-	// list.NewDefaultDelegate() crea un renderizador por defecto
-	lista := list.New(items, list.NewDefaultDelegate(), 50, 14)
-	lista.Title = "🛒 Shopify TUI"
-	lista.SetShowStatusBar(false)  // Ocultar barra de estado
-	lista.SetFilteringEnabled(false) // Desactivar filtrado con /
-
-	// === Cargar tiendas guardadas del archivo JSON ===
-	tiendas, _ := cargarTiendas() // Si hay error, tiendas será []
-
-	return Model{
-		vista:       VistaMenu,
-		lista:       lista,
-		inputNombre: inputNombre,
-		inputURL:    inputURL,
-		tiendas:     tiendas,
-		cursorInput: 0,
 	}
 }
 
@@ -138,28 +166,23 @@ func crearListaTiendas(tiendas []Tienda) []list.Item {
 	return items
 }
 
-// recrearMenuPrincipal recrea la lista del menú principal
-// Útil cuando volvemos al menú desde otra vista
-func (m *Model) recrearMenuPrincipal() {
-	items := []list.Item{
+// crearListaMetodos crea la lista de opciones para elegir método de descarga
+func crearListaMetodos() []list.Item {
+	return []list.Item{
 		itemMenu{
-			titulo: "🔐 Iniciar sesión en Shopify",
-			desc:   "Abre el navegador para autenticarte con tu cuenta",
+			titulo: "📥 Shopify Pull",
+			desc:   "Descargar tema directamente desde Shopify (shopify theme pull)",
 		},
 		itemMenu{
-			titulo: "➕ Agregar tienda",
-			desc:   "Guardar una nueva tienda para acceso rápido",
-		},
-		itemMenu{
-			titulo: "🚀 Ejecutar theme dev",
-			desc:   "Iniciar servidor de desarrollo local",
-		},
-		itemMenu{
-			titulo: "❌ Salir",
-			desc:   "Cerrar la aplicación (o presiona q)",
+			titulo: "🔗 Git Clone",
+			desc:   "Clonar desde un repositorio Git (SSH o HTTPS)",
 		},
 	}
+}
 
+// recrearMenuPrincipal recrea la lista del menú principal
+func (m *Model) recrearMenuPrincipal() {
+	items := crearMenuPrincipal()
 	m.lista = list.New(items, list.NewDefaultDelegate(), 50, 14)
 	m.lista.Title = "🛒 Shopify TUI"
 	m.lista.SetShowStatusBar(false)

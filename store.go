@@ -1,6 +1,6 @@
 // store.go - Manejo de configuración y persistencia
 // Este archivo se encarga de guardar y cargar las tiendas desde un archivo JSON
-// La configuración se guarda en ~/.config/shopify-tui/stores.json
+// También maneja la creación de directorios para cada tienda
 
 package main
 
@@ -8,66 +8,138 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Configuracion representa la estructura del archivo JSON
 type Configuracion struct {
-	Tiendas []Tienda `json:"tiendas"` // Lista de tiendas guardadas
+	Tiendas []Tienda `json:"tiendas"`
 }
 
-// obtenerRutaConfig retorna la ruta completa del archivo de configuración
-// Ejemplo: /home/usuario/.config/shopify-tui/stores.json
-func obtenerRutaConfig() (string, error) {
-	// os.UserHomeDir() obtiene el directorio home del usuario actual
-	// En Linux: /home/usuario
-	// En macOS: /Users/usuario
+// obtenerDirectorioBase retorna el directorio base donde se guardan las tiendas
+// Por defecto: ~/.config/shopify-tui/
+func obtenerDirectorioBase() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-
-	// filepath.Join une las partes de la ruta de forma segura
-	// (usa / en Linux/Mac y \ en Windows)
-	rutaArchivo := filepath.Join(home, ".config", "shopify-tui", "stores.json")
-
-	return rutaArchivo, nil
+	return filepath.Join(home, ".config", "shopify-tui"), nil
 }
 
-// crearDirectorioConfig crea el directorio de configuración si no existe
-// Equivalente a: mkdir -p ~/.config/shopify-tui
-func crearDirectorioConfig() error {
-	home, err := os.UserHomeDir()
+// obtenerRutaConfig retorna la ruta completa del archivo de configuración
+// ~/.config/shopify-tui/stores.json
+func obtenerRutaConfig() (string, error) {
+	dirBase, err := obtenerDirectorioBase()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dirBase, "stores.json"), nil
+}
+
+// obtenerDirectorioStores retorna el directorio donde se guardan los temas
+// ~/.config/shopify-tui/stores/
+func obtenerDirectorioStores() (string, error) {
+	dirBase, err := obtenerDirectorioBase()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dirBase, "stores"), nil
+}
+
+// crearDirectorioBase crea el directorio de configuración si no existe
+func crearDirectorioBase() error {
+	dirBase, err := obtenerDirectorioBase()
 	if err != nil {
 		return err
 	}
+	return os.MkdirAll(dirBase, 0755)
+}
 
-	rutaDir := filepath.Join(home, ".config", "shopify-tui")
+// crearDirectorioStores crea el directorio stores/ si no existe
+func crearDirectorioStores() error {
+	dirStores, err := obtenerDirectorioStores()
+	if err != nil {
+		return err
+	}
+	return os.MkdirAll(dirStores, 0755)
+}
 
-	// os.MkdirAll crea todos los directorios necesarios
-	// 0755 son los permisos: rwxr-xr-x (lectura/escritura para el dueño)
-	return os.MkdirAll(rutaDir, 0755)
+// crearDirectorioTienda crea un directorio para una tienda específica
+// Retorna la ruta completa del directorio creado
+// Ejemplo: ~/.config/shopify-tui/stores/mi-tienda/
+func crearDirectorioTienda(nombreTienda string) (string, error) {
+	// Crear directorio stores/ si no existe
+	if err := crearDirectorioStores(); err != nil {
+		return "", err
+	}
+
+	// Sanitizar el nombre para usarlo como nombre de carpeta
+	nombreCarpeta := sanitizarNombre(nombreTienda)
+
+	dirStores, err := obtenerDirectorioStores()
+	if err != nil {
+		return "", err
+	}
+
+	rutaTienda := filepath.Join(dirStores, nombreCarpeta)
+
+	// Crear el directorio de la tienda
+	if err := os.MkdirAll(rutaTienda, 0755); err != nil {
+		return "", err
+	}
+
+	return rutaTienda, nil
+}
+
+// sanitizarNombre convierte un nombre en algo seguro para usar como carpeta
+// Ejemplo: "Mi Tienda Principal" -> "mi-tienda-principal"
+func sanitizarNombre(nombre string) string {
+	// Convertir a minúsculas
+	nombre = strings.ToLower(nombre)
+
+	// Reemplazar espacios y caracteres especiales con guiones
+	replacer := strings.NewReplacer(
+		" ", "-",
+		"_", "-",
+		".", "-",
+		"/", "-",
+		"\\", "-",
+		":", "-",
+		"*", "",
+		"?", "",
+		"\"", "",
+		"<", "",
+		">", "",
+		"|", "",
+	)
+	nombre = replacer.Replace(nombre)
+
+	// Eliminar guiones duplicados
+	for strings.Contains(nombre, "--") {
+		nombre = strings.ReplaceAll(nombre, "--", "-")
+	}
+
+	// Eliminar guiones al inicio y final
+	nombre = strings.Trim(nombre, "-")
+
+	return nombre
 }
 
 // cargarTiendas lee las tiendas desde el archivo JSON
-// Si el archivo no existe, retorna una lista vacía (no es un error)
 func cargarTiendas() ([]Tienda, error) {
 	rutaArchivo, err := obtenerRutaConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	// Leer todo el contenido del archivo
 	datos, err := os.ReadFile(rutaArchivo)
 	if err != nil {
-		// Si el archivo no existe, no es un error - solo retornamos lista vacía
 		if os.IsNotExist(err) {
 			return []Tienda{}, nil
 		}
-		// Si es otro tipo de error, lo retornamos
 		return nil, err
 	}
 
-	// Parsear el JSON a nuestra estructura
 	var config Configuracion
 	if err := json.Unmarshal(datos, &config); err != nil {
 		return nil, err
@@ -77,10 +149,8 @@ func cargarTiendas() ([]Tienda, error) {
 }
 
 // guardarTiendas guarda las tiendas en el archivo JSON
-// Crea el directorio si no existe
 func guardarTiendas(tiendas []Tienda) error {
-	// Primero, asegurarnos de que el directorio existe
-	if err := crearDirectorioConfig(); err != nil {
+	if err := crearDirectorioBase(); err != nil {
 		return err
 	}
 
@@ -89,34 +159,31 @@ func guardarTiendas(tiendas []Tienda) error {
 		return err
 	}
 
-	// Crear la estructura de configuración
 	config := Configuracion{
 		Tiendas: tiendas,
 	}
 
-	// json.MarshalIndent convierte la estructura a JSON con formato legible
-	// "" es el prefijo (vacío)
-	// "  " es la indentación (2 espacios)
 	datos, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	// Escribir el archivo
-	// 0644 son los permisos: rw-r--r-- (lectura/escritura para dueño, solo lectura para otros)
 	return os.WriteFile(rutaArchivo, datos, 0644)
 }
 
 // eliminarTienda elimina una tienda por su índice
-// Retorna la lista actualizada
 func eliminarTienda(tiendas []Tienda, indice int) []Tienda {
-	// Verificar que el índice sea válido
 	if indice < 0 || indice >= len(tiendas) {
 		return tiendas
 	}
-
-	// En Go, para eliminar un elemento de un slice:
-	// append(slice[:indice], slice[indice+1:]...)
-	// Esto une todo lo que está antes del índice con todo lo que está después
 	return append(tiendas[:indice], tiendas[indice+1:]...)
+}
+
+// existeDirectorio verifica si un directorio existe
+func existeDirectorio(ruta string) bool {
+	info, err := os.Stat(ruta)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return info.IsDir()
 }
