@@ -4,6 +4,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -213,8 +215,17 @@ func ejecutarAbrirEditor(tienda Tienda) tea.Cmd {
 // Usa el shell por defecto del sistema
 func ejecutarAbrirTerminal(tienda Tienda) tea.Cmd {
 	// Usar zsh o bash según lo que esté disponible
-	shell := "zsh"
-	
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		shell = "zsh"
+	}
+
+	// Mostrar mensaje de cómo salir
+	fmt.Println("\n╭─────────────────────────────────────────────────╮")
+	fmt.Println("│  📂 Terminal abierta en: " + tienda.Nombre)
+	fmt.Println("│  💡 Escribe 'exit' o presiona Ctrl+D para volver")
+	fmt.Println("╰─────────────────────────────────────────────────╯\n")
+
 	// Crear comando que abre shell en el directorio
 	cmd := exec.Command(shell)
 	cmd.Dir = tienda.Ruta
