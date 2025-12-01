@@ -208,3 +208,24 @@ func ejecutarAbrirEditor(tienda Tienda) tea.Cmd {
 		}
 	})
 }
+
+// ejecutarAbrirTerminal abre una terminal interactiva en el directorio del tema
+// Usa el shell por defecto del sistema
+func ejecutarAbrirTerminal(tienda Tienda) tea.Cmd {
+	// Usar zsh o bash según lo que esté disponible
+	shell := "zsh"
+	
+	// Crear comando que abre shell en el directorio
+	cmd := exec.Command(shell)
+	cmd.Dir = tienda.Ruta
+
+	return tea.ExecProcess(cmd, func(err error) tea.Msg {
+		if err != nil {
+			return errorMsg{err: err}
+		}
+		return comandoTerminadoMsg{
+			resultado:       "✅ Terminal cerrada",
+			volverAOpciones: true,
+		}
+	})
+}

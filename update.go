@@ -475,6 +475,10 @@ func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "📝 Abrir editor de código":
 				// Abrir VS Code (o el editor configurado)
 				return m, ejecutarAbrirEditor(m.tiendaParaDev)
+
+			case "💻 Abrir terminal":
+				// Abrir terminal en el directorio del tema
+				return m, ejecutarAbrirTerminal(m.tiendaParaDev)
 			}
 		}
 	}

@@ -223,6 +223,10 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 			titulo: "📝 Abrir editor de código",
 			desc:   "Abrir el proyecto en tu editor (VS Code, etc.)",
 		},
+		itemMenu{
+			titulo: "💻 Abrir terminal",
+			desc:   "Abrir una terminal en el directorio del tema",
+		},
 	}
 
 	if tieneServidor {
