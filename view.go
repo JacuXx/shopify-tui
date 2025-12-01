@@ -376,12 +376,18 @@ func (m Model) vistaLogs() string {
 		b.WriteString("\n")
 	}
 
+	// Indicador de modo selección
+	if m.modoSeleccion {
+		b.WriteString(estiloExito.Render("✓ MODO SELECCIÓN ACTIVO - Selecciona texto con el mouse"))
+		b.WriteString("\n")
+	}
+
 	// Ayuda - las teclas se envían a Shopify CLI excepto las de control
 	b.WriteString(estiloInfo.Render(Icons.Terminal + " MODO INTERACTIVO - Las teclas se envían a Shopify CLI"))
 	b.WriteString("\n")
 	b.WriteString(estiloAyuda.Render("Scroll: j/k, ↑/↓, PgUp/PgDn, mouse wheel"))
 	b.WriteString("\n")
-	b.WriteString(estiloAyuda.Render("g: inicio • G: final • Ctrl+Q: volver • Ctrl+S: detener"))
+	b.WriteString(estiloAyuda.Render("v: modo selección • g: inicio • G: final • Ctrl+Q: volver"))
 
 	return b.String()
 }

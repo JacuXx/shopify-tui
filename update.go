@@ -38,8 +38,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c":
-			return m, tea.Quit
 		case "q":
 			if m.vista == VistaMenu {
 				return m, tea.Quit
@@ -566,6 +564,10 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 	
 	switch msg := msg.(type) {
 	case tea.MouseMsg:
+		// En modo selección, ignorar eventos de mouse para permitir selección nativa
+		if m.modoSeleccion {
+			return m, nil
+		}
 		// Soporte para scroll con mouse
 		switch msg.Type {
 		case tea.MouseWheelUp:
@@ -586,10 +588,29 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		key := msg.String()
 		
-		// Teclas de control del TUI
+		// EN MODO SELECCIÓN: Solo responder a 'v' para salir, ignorar todo lo demás
+		if m.modoSeleccion {
+			if key == "v" {
+				m.modoSeleccion = false
+				m.mensaje = ""
+				return m, tea.EnableMouseCellMotion
+			}
+			// Ignorar todas las demás teclas en modo selección
+			return m, nil
+		}
+		
+		// Teclas de control del TUI (solo cuando NO está en modo selección)
 		switch key {
+		case "v":
+			// Toggle modo selección (permite copiar con mouse) - "v" como visual mode en vim
+			m.modoSeleccion = true
+			m.mensaje = IconInfo("Modo selección ON - Usa Ctrl+Shift+C para copiar, 'v' para salir")
+			// Desactivar captura de mouse para permitir selección nativa
+			return m, tea.DisableMouse
+			
 		case "ctrl+q":
 			// Volver al menú de modos (el servidor sigue corriendo)
+			m.modoSeleccion = false // Resetear modo selección
 			m.vista = VistaSeleccionarModo
 			gestor := ObtenerGestor()
 			tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
@@ -603,7 +624,8 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.lista.SetShowStatusBar(false)
 			m.lista.SetFilteringEnabled(false)
 			m.mensaje = ""
-			return m, nil
+			// Reactivar mouse al salir
+			return m, tea.EnableMouseCellMotion
 
 		case "ctrl+s":
 			// Detener servidor desde la vista de logs

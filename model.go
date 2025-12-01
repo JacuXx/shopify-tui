@@ -69,7 +69,8 @@ type Model struct {
 	alto        int    // Alto de la terminal
 	
 	// Vista de logs
-	logsScroll int // Posición de scroll en los logs
+	logsScroll     int  // Posición de scroll en los logs
+	modoSeleccion  bool // Modo selección (permite copiar texto con mouse)
 }
 
 // itemMenu representa una opción del menú principal
