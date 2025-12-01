@@ -5,7 +5,7 @@ const os = require('os');
 const { execSync } = require('child_process');
 
 const VERSION = '1.0.0';
-const REPO = 'JacuXx/shopify-cli';
+const REPO = 'JacuXx/shopify-tui';
 
 // Mapeo de plataforma/arquitectura a nombre de binario
 function getBinaryName() {
@@ -90,7 +90,28 @@ async function install() {
     
     // Hacer ejecutable en Unix
     if (os.platform() !== 'win32') {
-      fs.chmodSync(destPath, '755');
+      fs.chmodSync(destPath, 0o755);
+      console.log('   Permisos establecidos: 755');
+    }
+    
+    // Crear symlink en /usr/local/bin para acceso global (Mac/Linux)
+    if (os.platform() !== 'win32') {
+      const globalBinPath = '/usr/local/bin/shopify-cli';
+      try {
+        if (fs.existsSync(globalBinPath)) {
+          fs.unlinkSync(globalBinPath);
+        }
+        fs.symlinkSync(destPath, globalBinPath);
+        console.log('   Symlink creado en /usr/local/bin/shopify-cli');
+      } catch (e) {
+        // Si falla el symlink (permisos), intentar copiar
+        try {
+          execSync(`cp "${destPath}" "${globalBinPath}" && chmod 755 "${globalBinPath}"`, { stdio: 'ignore' });
+          console.log('   Binario copiado a /usr/local/bin/shopify-cli');
+        } catch (e2) {
+          console.log('   ⚠️  No se pudo crear acceso global. Ejecuta con: npx shopify-cli');
+        }
+      }
     }
     
     console.log('✅ shopify-cli instalado correctamente!');
