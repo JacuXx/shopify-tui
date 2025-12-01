@@ -105,9 +105,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			guardarTiendas(m.tiendas)
 			m.mensaje = "✅ Tienda '" + msg.tienda.Nombre + "' agregada correctamente"
 		}
-		// Volver al menú
-		m.vista = VistaMenu
-		m.recrearMenuPrincipal()
+		
+		// Decidir a dónde volver
+		if msg.volverAOpciones && m.tiendaParaDev.Nombre != "" {
+			// Volver a opciones de desarrollo de la tienda actual
+			m.vista = VistaSeleccionarModo
+			gestor := ObtenerGestor()
+			tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
+			items := crearListaModos(m.tiendaParaDev, tieneServidor)
+			m.lista = list.New(items, list.NewDefaultDelegate(), 55, 14)
+			if tieneServidor {
+				m.lista.Title = "🟢 " + m.tiendaParaDev.Nombre + " (servidor activo)"
+			} else {
+				m.lista.Title = "🛠️ " + m.tiendaParaDev.Nombre
+			}
+			m.lista.SetShowStatusBar(false)
+			m.lista.SetFilteringEnabled(false)
+		} else {
+			// Volver al menú principal
+			m.vista = VistaMenu
+			m.recrearMenuPrincipal()
+		}
 		return m, nil
 
 	case errorMsg:
@@ -170,7 +188,7 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.tiendaTemporal = Tienda{}
 				return m, nil
 
-			case "🚀 Ejecutar theme dev":
+			case "🛠️ Opciones de desarrollo":
 				if len(m.tiendas) == 0 {
 					m.mensaje = "⚠️ No hay tiendas guardadas. Agrega una primero."
 					return m, nil
@@ -178,7 +196,7 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.vista = VistaSeleccionarTienda
 				items := crearListaTiendas(m.tiendas)
 				m.lista = list.New(items, list.NewDefaultDelegate(), 50, 14)
-				m.lista.Title = "🚀 Selecciona una tienda"
+				m.lista.Title = "🛠️ Selecciona una tienda"
 				m.lista.SetShowStatusBar(false)
 				m.lista.SetFilteringEnabled(false)
 				m.mensaje = ""
@@ -445,6 +463,18 @@ func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.vista = VistaMenu
 				m.recrearMenuPrincipal()
 				return m, nil
+
+			case "📥 Bajar cambios":
+				// Ejecutar theme pull
+				return m, ejecutarThemePull(m.tiendaParaDev)
+
+			case "📤 Pushear cambios":
+				// Ejecutar theme push
+				return m, ejecutarThemePush(m.tiendaParaDev)
+
+			case "📝 Abrir editor de código":
+				// Abrir VS Code (o el editor configurado)
+				return m, ejecutarAbrirEditor(m.tiendaParaDev)
 			}
 		}
 	}

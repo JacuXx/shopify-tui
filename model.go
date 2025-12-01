@@ -170,8 +170,8 @@ func crearMenuPrincipal() []list.Item {
 			desc:   "Guardar una nueva tienda y descargar su tema",
 		},
 		itemMenu{
-			titulo: "🚀 Ejecutar theme dev",
-			desc:   "Iniciar servidor de desarrollo (elige modo)",
+			titulo: "🛠️ Opciones de desarrollo",
+			desc:   "Iniciar servidor de desarrollo local",
 		},
 		itemMenu{
 			titulo: "📺 Ver servidores activos",
@@ -209,9 +209,25 @@ func crearListaMetodos() []list.Item {
 
 // crearListaModos crea la lista de opciones para elegir modo de servidor
 func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
+	// Opciones comunes siempre disponibles
+	opcionesComunes := []list.Item{
+		itemMenu{
+			titulo: "📥 Bajar cambios",
+			desc:   "Descargar cambios del tema (theme pull)",
+		},
+		itemMenu{
+			titulo: "📤 Pushear cambios",
+			desc:   "Subir cambios al tema (theme push)",
+		},
+		itemMenu{
+			titulo: "📝 Abrir editor de código",
+			desc:   "Abrir el proyecto en tu editor (VS Code, etc.)",
+		},
+	}
+
 	if tieneServidor {
-		// Ya hay un servidor corriendo - mostrar opciones para ver logs o detenerlo
-		return []list.Item{
+		// Ya hay un servidor corriendo - mostrar opciones de servidor + comunes
+		items := []list.Item{
 			itemMenu{
 				titulo: "📺 Ver logs en vivo",
 				desc:   "Ver los logs del servidor (Ctrl+Q para volver)",
@@ -221,14 +237,16 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 				desc:   "Terminar el servidor de desarrollo actual",
 			},
 		}
+		return append(items, opcionesComunes...)
 	}
-	// No hay servidor - mostrar opción para iniciar
-	return []list.Item{
+	// No hay servidor - mostrar opción para iniciar + comunes
+	items := []list.Item{
 		itemMenu{
 			titulo: "🚀 Iniciar servidor",
 			desc:   "Ejecutar theme dev y ver logs en tiempo real",
 		},
 	}
+	return append(items, opcionesComunes...)
 }
 
 // recrearMenuPrincipal recrea la lista del menú principal

@@ -13,8 +13,9 @@ import (
 
 // comandoTerminadoMsg indica que un comando terminó exitosamente
 type comandoTerminadoMsg struct {
-	resultado string
-	tienda    *Tienda // Tienda creada (si aplica)
+	resultado       string
+	tienda          *Tienda // Tienda creada (si aplica)
+	volverAOpciones bool    // Si debe volver a opciones de desarrollo en vez del menú
 }
 
 // errorMsg indica que hubo un error al ejecutar un comando
@@ -155,5 +156,55 @@ func ejecutarThemeDevInteractivo(tienda Tienda) tea.Cmd {
 			return errorMsg{err: err}
 		}
 		return comandoTerminadoMsg{resultado: "✅ Servidor de desarrollo cerrado"}
+	})
+}
+
+// ejecutarThemePull ejecuta 'shopify theme pull' para bajar cambios del tema
+func ejecutarThemePull(tienda Tienda) tea.Cmd {
+	cmd := exec.Command("shopify", "theme", "pull", "--store", tienda.URL)
+	cmd.Dir = tienda.Ruta
+
+	return tea.ExecProcess(cmd, func(err error) tea.Msg {
+		if err != nil {
+			return errorMsg{err: err}
+		}
+		return comandoTerminadoMsg{
+			resultado:       "✅ Cambios descargados correctamente",
+			volverAOpciones: true,
+		}
+	})
+}
+
+// ejecutarThemePush ejecuta 'shopify theme push' para subir cambios al tema
+func ejecutarThemePush(tienda Tienda) tea.Cmd {
+	cmd := exec.Command("shopify", "theme", "push", "--store", tienda.URL)
+	cmd.Dir = tienda.Ruta
+
+	return tea.ExecProcess(cmd, func(err error) tea.Msg {
+		if err != nil {
+			return errorMsg{err: err}
+		}
+		return comandoTerminadoMsg{
+			resultado:       "✅ Cambios subidos correctamente",
+			volverAOpciones: true,
+		}
+	})
+}
+
+// ejecutarAbrirEditor abre el editor de código en el directorio del tema
+// Por defecto usa VS Code (code .), pero se puede cambiar
+func ejecutarAbrirEditor(tienda Tienda) tea.Cmd {
+	// Intentar con VS Code primero
+	cmd := exec.Command("code", ".")
+	cmd.Dir = tienda.Ruta
+
+	return tea.ExecProcess(cmd, func(err error) tea.Msg {
+		if err != nil {
+			return errorMsg{err: err}
+		}
+		return comandoTerminadoMsg{
+			resultado:       "✅ Editor abierto",
+			volverAOpciones: true,
+		}
 	})
 }
