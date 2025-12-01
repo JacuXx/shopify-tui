@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -60,6 +61,12 @@ func (m Model) View() string {
 		return m.vistaInputGit()
 	case VistaSeleccionarTienda:
 		return m.vistaSeleccionarTienda()
+	case VistaSeleccionarModo:
+		return m.vistaSeleccionarModo()
+	case VistaLogs:
+		return m.vistaLogs()
+	case VistaServidores:
+		return m.vistaServidores()
 	default:
 		return m.vistaMenu()
 	}
@@ -78,8 +85,10 @@ func (m Model) vistaMenu() string {
 		}
 	}
 
+	// Mostrar info de tiendas y servidores
+	servidoresActivos := ObtenerGestor().ContarActivos()
 	s += "\n" + estiloAyuda.Render(
-		fmt.Sprintf("📦 Tiendas guardadas: %d", len(m.tiendas)),
+		fmt.Sprintf("📦 Tiendas: %d | 🟢 Servidores activos: %d", len(m.tiendas), servidoresActivos),
 	)
 	s += "\n" + estiloAyuda.Render("j/k: navegar • enter: seleccionar • q: salir")
 
@@ -233,7 +242,208 @@ func (m Model) vistaSeleccionarTienda() string {
 		b.WriteString("\n")
 	}
 
-	b.WriteString(estiloAyuda.Render("enter: ejecutar theme dev • d: eliminar • esc: volver"))
+	b.WriteString(estiloAyuda.Render("enter: seleccionar • d: eliminar • esc: volver"))
 
 	return b.String()
+}
+
+// vistaSeleccionarModo renderiza el menú para elegir modo de servidor
+func (m Model) vistaSeleccionarModo() string {
+	var b strings.Builder
+
+	// Mostrar info de la tienda
+	gestor := ObtenerGestor()
+	tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
+
+	if tieneServidor {
+		b.WriteString(estiloExito.Render("🟢 Servidor activo"))
+		b.WriteString("\n")
+		// Mostrar URL del servidor
+		for _, s := range gestor.ObtenerServidoresActivos() {
+			if s.Tienda.Nombre == m.tiendaParaDev.Nombre {
+				b.WriteString(estiloInfo.Render("   " + s.URL))
+				b.WriteString("\n")
+				break
+			}
+		}
+	}
+
+	b.WriteString("\n")
+	b.WriteString(m.lista.View())
+	b.WriteString("\n")
+
+	// Mostrar ruta
+	b.WriteString(estiloInfo.Render("📁 " + m.tiendaParaDev.Ruta))
+	b.WriteString("\n")
+
+	if m.mensaje != "" {
+		if strings.HasPrefix(m.mensaje, "✅") {
+			b.WriteString(estiloExito.Render(m.mensaje))
+		} else {
+			b.WriteString(estiloError.Render(m.mensaje))
+		}
+		b.WriteString("\n")
+	}
+
+	b.WriteString(estiloAyuda.Render("enter: seleccionar • esc: volver"))
+
+	return b.String()
+}
+
+// vistaLogs renderiza los logs del servidor en tiempo real
+func (m Model) vistaLogs() string {
+	var b strings.Builder
+
+	servidor := ObtenerGestor().ObtenerServidor(m.tiendaParaDev.Nombre)
+
+	// Header
+	if servidor != nil && servidor.Activo {
+		b.WriteString(estiloExito.Render("🟢 " + m.tiendaParaDev.Nombre + " - Servidor activo"))
+		b.WriteString("\n")
+		b.WriteString(estiloInfo.Render("   " + servidor.URL))
+	} else {
+		b.WriteString(estiloError.Render("🔴 " + m.tiendaParaDev.Nombre + " - Servidor detenido"))
+	}
+	b.WriteString("\n")
+	b.WriteString(strings.Repeat("─", 60))
+	b.WriteString("\n\n")
+
+	// Logs
+	if servidor != nil {
+		logs := servidor.ObtenerLogs()
+		
+		if len(logs) == 0 {
+			b.WriteString(estiloAyuda.Render("Esperando logs del servidor..."))
+			b.WriteString("\n")
+		} else {
+			// Determinar qué líneas mostrar (20 líneas visibles)
+			lineasVisibles := 15
+			if m.alto > 0 {
+				lineasVisibles = m.alto - 12 // Dejar espacio para header y footer
+				if lineasVisibles < 5 {
+					lineasVisibles = 5
+				}
+			}
+
+			inicio := m.logsScroll
+			fin := inicio + lineasVisibles
+			
+			if fin > len(logs) {
+				fin = len(logs)
+			}
+			if inicio > len(logs) {
+				inicio = len(logs)
+			}
+
+			// Mostrar las líneas
+			for i := inicio; i < fin; i++ {
+				linea := logs[i]
+				// Colorear según el contenido
+				if strings.Contains(linea, "error") || strings.Contains(linea, "Error") {
+					b.WriteString(estiloError.Render(linea))
+				} else if strings.Contains(linea, "http://") || strings.Contains(linea, "https://") {
+					b.WriteString(estiloExito.Render(linea))
+				} else {
+					b.WriteString(linea)
+				}
+				b.WriteString("\n")
+			}
+
+			// Indicador de scroll
+			if len(logs) > lineasVisibles {
+				b.WriteString("\n")
+				porcentaje := 0
+				if len(logs)-lineasVisibles > 0 {
+					porcentaje = (m.logsScroll * 100) / (len(logs) - lineasVisibles)
+				}
+				b.WriteString(estiloAyuda.Render(fmt.Sprintf("Líneas %d-%d de %d (%d%%)", inicio+1, fin, len(logs), porcentaje)))
+			}
+		}
+	} else {
+		b.WriteString(estiloError.Render("No hay servidor activo"))
+	}
+
+	b.WriteString("\n\n")
+	b.WriteString(strings.Repeat("─", 60))
+	b.WriteString("\n")
+
+	if m.mensaje != "" {
+		if strings.HasPrefix(m.mensaje, "✅") || strings.HasPrefix(m.mensaje, "🛑") {
+			b.WriteString(estiloExito.Render(m.mensaje))
+		} else {
+			b.WriteString(estiloError.Render(m.mensaje))
+		}
+		b.WriteString("\n")
+	}
+
+	// Ayuda - las teclas se envían a Shopify CLI excepto las de control
+	b.WriteString(estiloInfo.Render("🎮 MODO INTERACTIVO - Las teclas se envían a Shopify CLI"))
+	b.WriteString("\n")
+	b.WriteString(estiloAyuda.Render("Ctrl+Q: volver al menú • Ctrl+S: detener • PgUp/PgDn: scroll"))
+
+	return b.String()
+}
+
+// vistaServidores renderiza la lista de servidores activos
+func (m Model) vistaServidores() string {
+	var b strings.Builder
+
+	b.WriteString(estiloTitulo.Render("📺 Servidores Activos"))
+	b.WriteString("\n\n")
+
+	servidores := ObtenerGestor().ObtenerServidoresActivos()
+
+	if len(servidores) == 0 {
+		b.WriteString(estiloAyuda.Render("No hay servidores corriendo."))
+		b.WriteString("\n")
+		b.WriteString(estiloAyuda.Render("Inicia uno desde '🚀 Iniciar servidor (background)'"))
+		b.WriteString("\n\n")
+		b.WriteString(estiloAyuda.Render("esc: volver al menú"))
+		return estiloContenedor.Render(b.String())
+	}
+
+	// Mostrar cada servidor
+	for i, servidor := range servidores {
+		// Calcular tiempo activo
+		duracion := formatearDuracion(servidor.Iniciado)
+
+		// Indicador de selección
+		if i == m.lista.Index() {
+			b.WriteString(estiloInputActivo.Render("> "))
+		} else {
+			b.WriteString("  ")
+		}
+
+		// Info del servidor
+		b.WriteString(estiloLabel.Render(servidor.Tienda.Nombre))
+		b.WriteString("\n")
+		b.WriteString(fmt.Sprintf("    🌐 %s\n", servidor.URL))
+		b.WriteString(fmt.Sprintf("    📍 Puerto: %d | ⏱️ Activo: %s\n", servidor.Puerto, duracion))
+		b.WriteString("\n")
+	}
+
+	if m.mensaje != "" {
+		if strings.HasPrefix(m.mensaje, "✅") {
+			b.WriteString(estiloExito.Render(m.mensaje))
+		} else {
+			b.WriteString(estiloError.Render(m.mensaje))
+		}
+		b.WriteString("\n")
+	}
+
+	b.WriteString(estiloAyuda.Render("s: detener servidor • S: detener todos • esc: volver"))
+
+	return estiloContenedor.Render(b.String())
+}
+
+// formatearDuracion convierte la duración en un formato legible
+func formatearDuracion(inicio time.Time) string {
+	duracion := time.Since(inicio)
+
+	if duracion < time.Minute {
+		return fmt.Sprintf("%ds", int(duracion.Seconds()))
+	} else if duracion < time.Hour {
+		return fmt.Sprintf("%dm %ds", int(duracion.Minutes()), int(duracion.Seconds())%60)
+	}
+	return fmt.Sprintf("%dh %dm", int(duracion.Hours()), int(duracion.Minutes())%60)
 }

@@ -8,7 +8,8 @@ CLI interactivo tipo Vim para gestionar tiendas Shopify. Permite iniciar sesión
 - 📦 **Gestión de tiendas** - Guarda múltiples tiendas para acceso rápido
 - 📥 **Shopify Pull** - Descarga temas directamente desde Shopify
 - 🔗 **Git Clone** - Clona temas desde repositorios Git (SSH o HTTPS)
-- 🚀 **Theme Dev** - Inicia el servidor de desarrollo con un Enter
+- 🚀 **Theme Dev en Background** - Servidores corren en segundo plano
+- 📺 **Gestión de Servidores** - Ve y controla servidores activos (un servidor por tienda)
 - ⌨️ **Navegación tipo Vim** - j/k para navegar, Enter para seleccionar
 
 ## 📁 Estructura del Proyecto
@@ -21,6 +22,7 @@ shopify-tui/
 ├── view.go      # Renderizado de UI (View)
 ├── store.go     # Persistencia JSON y manejo de directorios
 ├── commands.go  # Ejecución de Shopify CLI y Git
+├── server.go    # Gestión de servidores en background
 ├── go.mod       # Dependencias
 └── go.sum       # Checksums
 ```
@@ -65,7 +67,7 @@ shopify-tui
 | `j` / `↓` | Mover abajo |
 | `k` / `↑` | Mover arriba |
 | `Enter` | Seleccionar opción |
-| `q` | Salir |
+| `q` | Salir (detiene todos los servidores) |
 | `Ctrl+C` | Salir forzado |
 
 ### Formulario (Agregar Tienda)
@@ -73,7 +75,7 @@ shopify-tui
 |-------|--------|
 | `Tab` / `↓` | Siguiente campo |
 | `Shift+Tab` / `↑` | Campo anterior |
-| `Enter` | Guardar tienda |
+| `Enter` | Continuar/Guardar |
 | `Esc` | Cancelar |
 
 ### Lista de Tiendas
@@ -81,8 +83,17 @@ shopify-tui
 |-------|--------|
 | `j` / `↓` | Mover abajo |
 | `k` / `↑` | Mover arriba |
-| `Enter` | Ejecutar theme dev |
+| `Enter` | Iniciar servidor |
 | `d` | Eliminar tienda |
+| `Esc` | Volver al menú |
+
+### Servidores Activos
+| Tecla | Acción |
+|-------|--------|
+| `j` / `↓` | Mover abajo |
+| `k` / `↑` | Mover arriba |
+| `s` | Detener servidor seleccionado |
+| `S` | Detener TODOS los servidores |
 | `Esc` | Volver al menú |
 
 ## 📂 Configuración

@@ -19,6 +19,9 @@ const (
 	VistaSeleccionarMetodo              // 2 - Elegir método: Shopify Pull o Git Clone
 	VistaInputGit                       // 3 - Input para URL del repositorio git
 	VistaSeleccionarTienda              // 4 - Lista de tiendas para theme dev
+	VistaSeleccionarModo                // 5 - Elegir modo: background o interactivo
+	VistaLogs                           // 6 - Ver logs del servidor en tiempo real
+	VistaServidores                     // 7 - Ver y gestionar servidores activos
 )
 
 // MetodoDescarga indica cómo se obtienen los archivos del tema
@@ -46,7 +49,8 @@ type Model struct {
 	vista Vista // Pantalla actual (menú, formulario, etc.)
 
 	// Componentes de UI (de la librería bubbles)
-	lista       list.Model      // Lista del menú principal y tiendas
+	lista         list.Model      // Lista del menú principal y tiendas
+	tiendaParaDev Tienda          // Tienda seleccionada para theme dev (antes de elegir modo)
 	inputNombre textinput.Model // Input para el nombre de la tienda
 	inputURL    textinput.Model // Input para la URL de la tienda
 	inputGit    textinput.Model // Input para la URL del repositorio git
@@ -63,6 +67,9 @@ type Model struct {
 	cursorInput int    // Qué input está activo (0=nombre, 1=url)
 	ancho       int    // Ancho de la terminal
 	alto        int    // Alto de la terminal
+	
+	// Vista de logs
+	logsScroll int // Posición de scroll en los logs
 }
 
 // itemMenu representa una opción del menú principal
@@ -82,11 +89,27 @@ type itemTienda struct {
 	tienda Tienda
 }
 
-func (i itemTienda) Title() string { return i.tienda.Nombre }
+func (i itemTienda) Title() string {
+	// Mostrar indicador si tiene servidor activo
+	if ObtenerGestor().TieneServidorActivo(i.tienda.Nombre) {
+		return "🟢 " + i.tienda.Nombre
+	}
+	return i.tienda.Nombre
+}
 func (i itemTienda) Description() string {
 	metodo := "📥 pull"
 	if i.tienda.Metodo == MetodoGitClone {
 		metodo = "🔗 git"
+	}
+	
+	// Mostrar URL del servidor si está activo
+	if ObtenerGestor().TieneServidorActivo(i.tienda.Nombre) {
+		servidores := ObtenerGestor().ObtenerServidoresActivos()
+		for _, s := range servidores {
+			if s.Tienda.Nombre == i.tienda.Nombre {
+				return i.tienda.URL + " → " + s.URL
+			}
+		}
 	}
 	return i.tienda.URL + " [" + metodo + "]"
 }
@@ -148,11 +171,15 @@ func crearMenuPrincipal() []list.Item {
 		},
 		itemMenu{
 			titulo: "🚀 Ejecutar theme dev",
-			desc:   "Iniciar servidor de desarrollo local",
+			desc:   "Iniciar servidor de desarrollo (elige modo)",
+		},
+		itemMenu{
+			titulo: "📺 Ver servidores activos",
+			desc:   "Gestionar servidores corriendo en background",
 		},
 		itemMenu{
 			titulo: "❌ Salir",
-			desc:   "Cerrar la aplicación (o presiona q)",
+			desc:   "Cerrar la aplicación (detiene servidores en background)",
 		},
 	}
 }
@@ -180,10 +207,38 @@ func crearListaMetodos() []list.Item {
 	}
 }
 
+// crearListaModos crea la lista de opciones para elegir modo de servidor
+func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
+	if tieneServidor {
+		// Ya hay un servidor corriendo - mostrar opciones para ver logs o detenerlo
+		return []list.Item{
+			itemMenu{
+				titulo: "📺 Ver logs en vivo",
+				desc:   "Ver los logs del servidor (q o esc para volver)",
+			},
+			itemMenu{
+				titulo: "🛑 Detener servidor",
+				desc:   "Terminar el servidor de desarrollo actual",
+			},
+		}
+	}
+	// No hay servidor - mostrar opciones para iniciar
+	return []list.Item{
+		itemMenu{
+			titulo: "🔄 Iniciar en background",
+			desc:   "El servidor corre en segundo plano, puedes seguir usando el CLI",
+		},
+		itemMenu{
+			titulo: "🖥️ Iniciar interactivo",
+			desc:   "Ver logs directamente en la terminal (Ctrl+C para volver al menú)",
+		},
+	}
+}
+
 // recrearMenuPrincipal recrea la lista del menú principal
 func (m *Model) recrearMenuPrincipal() {
 	items := crearMenuPrincipal()
-	m.lista = list.New(items, list.NewDefaultDelegate(), 50, 14)
+	m.lista = list.New(items, list.NewDefaultDelegate(), 50, 16)
 	m.lista.Title = "🛒 Shopify TUI"
 	m.lista.SetShowStatusBar(false)
 	m.lista.SetFilteringEnabled(false)

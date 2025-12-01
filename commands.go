@@ -143,3 +143,17 @@ func ejecutarDescargaConExec(tienda Tienda, directorio string) tea.Cmd {
 		}
 	})
 }
+
+// ejecutarThemeDevInteractivo ejecuta 'shopify theme dev' en modo interactivo
+// Esto toma control de la terminal para mostrar los logs
+func ejecutarThemeDevInteractivo(tienda Tienda) tea.Cmd {
+	cmd := exec.Command("shopify", "theme", "dev", "--store", tienda.URL)
+	cmd.Dir = tienda.Ruta
+
+	return tea.ExecProcess(cmd, func(err error) tea.Msg {
+		if err != nil {
+			return errorMsg{err: err}
+		}
+		return comandoTerminadoMsg{resultado: "✅ Servidor de desarrollo cerrado"}
+	})
+}

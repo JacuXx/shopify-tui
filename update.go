@@ -4,9 +4,21 @@
 package main
 
 import (
+	"time"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+// tickMsg es un mensaje para actualizar la vista de logs periódicamente
+type tickMsg time.Time
+
+// tickCmd retorna un comando que envía un tickMsg cada 500ms
+func tickCmd() tea.Cmd {
+	return tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
+}
 
 // Init se ejecuta una vez al inicio
 func (m Model) Init() tea.Cmd {
@@ -54,6 +66,33 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.vista = VistaMenu
 				m.mensaje = ""
 				m.recrearMenuPrincipal()
+			case VistaSeleccionarModo:
+				m.vista = VistaSeleccionarTienda
+				m.mensaje = ""
+				items := crearListaTiendas(m.tiendas)
+				m.lista = list.New(items, list.NewDefaultDelegate(), 50, 14)
+				m.lista.Title = "🚀 Selecciona una tienda"
+				m.lista.SetShowStatusBar(false)
+				m.lista.SetFilteringEnabled(false)
+			case VistaLogs:
+				// Volver al menú de modos de esta tienda
+				m.vista = VistaSeleccionarModo
+				gestor := ObtenerGestor()
+				tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
+				items := crearListaModos(m.tiendaParaDev, tieneServidor)
+				m.lista = list.New(items, list.NewDefaultDelegate(), 55, 10)
+				if tieneServidor {
+					m.lista.Title = "🟢 " + m.tiendaParaDev.Nombre + " (servidor activo)"
+				} else {
+					m.lista.Title = "⚡ " + m.tiendaParaDev.Nombre
+				}
+				m.lista.SetShowStatusBar(false)
+				m.lista.SetFilteringEnabled(false)
+				m.mensaje = ""
+			case VistaServidores:
+				m.vista = VistaMenu
+				m.mensaje = ""
+				m.recrearMenuPrincipal()
 			}
 			return m, nil
 		}
@@ -74,6 +113,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case errorMsg:
 		m.mensaje = "❌ Error: " + msg.err.Error()
 		return m, nil
+
+	case tickMsg:
+		// Solo refrescar si estamos en la vista de logs
+		if m.vista == VistaLogs {
+			return m, tickCmd()
+		}
+		return m, nil
 	}
 
 	// Delegar a la vista actual
@@ -88,6 +134,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateInputGit(msg)
 	case VistaSeleccionarTienda:
 		return m.updateSeleccionarTienda(msg)
+	case VistaSeleccionarModo:
+		return m.updateSeleccionarModo(msg)
+	case VistaLogs:
+		return m.updateLogs(msg)
+	case VistaServidores:
+		return m.updateServidores(msg)
 	}
 
 	return m, nil
@@ -132,7 +184,14 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.mensaje = ""
 				return m, nil
 
+			case "📺 Ver servidores activos":
+				m.vista = VistaServidores
+				m.mensaje = ""
+				return m, nil
+
 			case "❌ Salir":
+				// Detener todos los servidores antes de salir
+				ObtenerGestor().DetenerTodos()
 				return m, tea.Quit
 			}
 		}
@@ -290,8 +349,24 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
-			// Ejecutar theme dev
-			return m, ejecutarThemeDev(item.tienda.URL, item.tienda.Ruta)
+			// Guardar tienda seleccionada y pasar al menú de modos
+			m.tiendaParaDev = item.tienda
+			gestor := ObtenerGestor()
+			tieneServidor := gestor.TieneServidorActivo(item.tienda.Nombre)
+
+			// Ir a seleccionar modo
+			m.vista = VistaSeleccionarModo
+			items := crearListaModos(item.tienda, tieneServidor)
+			m.lista = list.New(items, list.NewDefaultDelegate(), 55, 10)
+			if tieneServidor {
+				m.lista.Title = "🟢 " + item.tienda.Nombre + " (servidor activo)"
+			} else {
+				m.lista.Title = "⚡ " + item.tienda.Nombre
+			}
+			m.lista.SetShowStatusBar(false)
+			m.lista.SetFilteringEnabled(false)
+			m.mensaje = ""
+			return m, nil
 
 		case "d":
 			// Eliminar tienda
@@ -325,4 +400,232 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.lista, cmd = m.lista.Update(msg)
 	return m, cmd
+}
+
+// updateSeleccionarModo maneja la selección de modo para el servidor
+func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter":
+			item, ok := m.lista.SelectedItem().(itemMenu)
+			if !ok {
+				return m, nil
+			}
+
+			gestor := ObtenerGestor()
+
+			switch item.titulo {
+			case "🔄 Iniciar en background":
+				// Iniciar servidor en background
+				servidor, err := gestor.IniciarServidor(m.tiendaParaDev)
+				if err != nil {
+					m.mensaje = "❌ " + err.Error()
+					return m, nil
+				}
+				// Después de iniciar, ir a la vista de logs
+				m.mensaje = "✅ Servidor iniciado en " + servidor.URL
+				m.vista = VistaLogs
+				m.logsScroll = 0
+				return m, tickCmd()
+
+			case "🖥️ Iniciar interactivo":
+				// Iniciar servidor en background y mostrar logs
+				servidor, err := gestor.IniciarServidor(m.tiendaParaDev)
+				if err != nil {
+					m.mensaje = "❌ " + err.Error()
+					return m, nil
+				}
+				m.mensaje = "✅ Servidor iniciado en " + servidor.URL
+				m.vista = VistaLogs
+				m.logsScroll = 0
+				return m, tickCmd()
+
+			case "📺 Ver logs en vivo":
+				// Ir a ver los logs del servidor activo
+				m.vista = VistaLogs
+				m.logsScroll = 0
+				m.mensaje = ""
+				return m, tickCmd()
+
+			case "🛑 Detener servidor":
+				// Detener el servidor de esta tienda
+				if err := gestor.DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
+					m.mensaje = "❌ " + err.Error()
+				} else {
+					m.mensaje = "🛑 Servidor de '" + m.tiendaParaDev.Nombre + "' detenido"
+				}
+				m.vista = VistaMenu
+				m.recrearMenuPrincipal()
+				return m, nil
+			}
+		}
+	}
+
+	var cmd tea.Cmd
+	m.lista, cmd = m.lista.Update(msg)
+	return m, cmd
+}
+
+// updateServidores maneja la vista de servidores activos
+func (m Model) updateServidores(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "s":
+			// Detener el servidor seleccionado
+			servidores := ObtenerGestor().ObtenerServidoresActivos()
+			if len(servidores) == 0 {
+				return m, nil
+			}
+
+			indice := m.lista.Index()
+			if indice < 0 || indice >= len(servidores) {
+				indice = 0
+			}
+
+			servidor := servidores[indice]
+			if err := ObtenerGestor().DetenerServidor(servidor.Tienda.Nombre); err != nil {
+				m.mensaje = "❌ " + err.Error()
+			} else {
+				m.mensaje = "✅ Servidor de '" + servidor.Tienda.Nombre + "' detenido"
+			}
+			return m, nil
+
+		case "S":
+			// Detener todos los servidores
+			ObtenerGestor().DetenerTodos()
+			m.mensaje = "✅ Todos los servidores detenidos"
+			return m, nil
+
+		case "j", "down":
+			// Navegar abajo en la lista de servidores
+			servidores := ObtenerGestor().ObtenerServidoresActivos()
+			if len(servidores) > 0 {
+				// Usar la lista para manejar la navegación
+				m.lista, _ = m.lista.Update(msg)
+			}
+			return m, nil
+
+		case "k", "up":
+			// Navegar arriba
+			servidores := ObtenerGestor().ObtenerServidoresActivos()
+			if len(servidores) > 0 {
+				m.lista, _ = m.lista.Update(msg)
+			}
+			return m, nil
+		}
+	}
+
+	return m, nil
+}
+
+// updateLogs maneja la vista de logs en tiempo real
+func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
+	servidor := ObtenerGestor().ObtenerServidor(m.tiendaParaDev.Nombre)
+	
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		key := msg.String()
+		
+		// Teclas de control del TUI
+		switch key {
+		case "ctrl+q":
+			// Volver al menú de modos (el servidor sigue corriendo)
+			m.vista = VistaSeleccionarModo
+			gestor := ObtenerGestor()
+			tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
+			items := crearListaModos(m.tiendaParaDev, tieneServidor)
+			m.lista = list.New(items, list.NewDefaultDelegate(), 55, 10)
+			if tieneServidor {
+				m.lista.Title = "🟢 " + m.tiendaParaDev.Nombre + " (servidor activo)"
+			} else {
+				m.lista.Title = "⚡ " + m.tiendaParaDev.Nombre
+			}
+			m.lista.SetShowStatusBar(false)
+			m.lista.SetFilteringEnabled(false)
+			m.mensaje = ""
+			return m, nil
+
+		case "ctrl+s":
+			// Detener servidor desde la vista de logs
+			if err := ObtenerGestor().DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
+				m.mensaje = "❌ " + err.Error()
+			} else {
+				m.mensaje = "🛑 Servidor detenido"
+			}
+			return m, tickCmd()
+
+		case "ctrl+g":
+			// Ir al final de los logs
+			if servidor != nil {
+				logs := servidor.ObtenerLogs()
+				maxScroll := len(logs) - 20
+				if maxScroll < 0 {
+					maxScroll = 0
+				}
+				m.logsScroll = maxScroll
+			}
+			return m, nil
+
+		case "ctrl+t":
+			// Ir al inicio de los logs
+			m.logsScroll = 0
+			return m, nil
+
+		case "pgdown":
+			// Scroll rápido hacia abajo
+			if servidor != nil {
+				logs := servidor.ObtenerLogs()
+				maxScroll := len(logs) - 20
+				if maxScroll < 0 {
+					maxScroll = 0
+				}
+				m.logsScroll += 10
+				if m.logsScroll > maxScroll {
+					m.logsScroll = maxScroll
+				}
+			}
+			return m, nil
+
+		case "pgup":
+			// Scroll rápido hacia arriba
+			m.logsScroll -= 10
+			if m.logsScroll < 0 {
+				m.logsScroll = 0
+			}
+			return m, nil
+
+		default:
+			// Todas las demás teclas se envían al proceso de Shopify
+			if servidor != nil && servidor.Activo {
+				// Convertir tecla a lo que espera el proceso
+				var input string
+				switch key {
+				case "enter":
+					input = "\n"
+				case "space":
+					input = " "
+				case "tab":
+					input = "\t"
+				case "backspace":
+					input = "\b"
+				default:
+					// Si es una tecla simple (letra, número, etc.)
+					if len(key) == 1 {
+						input = key
+					}
+				}
+				
+				if input != "" {
+					if err := servidor.EnviarInput(input); err != nil {
+						m.mensaje = "⚠️ Error enviando input"
+					}
+				}
+			}
+			return m, nil
+		}
+	}
+
+	return m, nil
 }
