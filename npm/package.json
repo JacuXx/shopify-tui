@@ -1,0 +1,29 @@
+{
+  "name": "shopify-cli-tui",
+  "version": "1.0.0",
+  "description": "CLI interactivo tipo Vim para gestionar tiendas Shopify",
+  "bin": {
+    "shopify-cli": "./bin/cli.js"
+  },
+  "scripts": {
+    "postinstall": "node ./scripts/install.js"
+  },
+  "keywords": [
+    "shopify",
+    "cli",
+    "tui",
+    "terminal",
+    "theme",
+    "dev"
+  ],
+  "author": "JacuXx",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JacuXx/shopify-cli.git"
+  },
+  "homepage": "https://github.com/JacuXx/shopify-cli#readme",
+  "engines": {
+    "node": ">=14"
+  }
+}

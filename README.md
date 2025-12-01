@@ -4,26 +4,17 @@ CLI interactivo tipo Vim para gestionar tiendas Shopify. Permite iniciar sesión
 
 ## 🚀 Instalación
 
-### Requisitos previos
-- [Go 1.21+](https://go.dev/dl/)
-- [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) (`npm install -g @shopify/cli`)
-
-### Instalar (1 comando)
-
 ```bash
-go install github.com/JacuXx/shopify-cli@latest
+npm install -g shopify-cli-tui
 ```
 
-### Ejecutar
+## ▶️ Ejecutar
 
 ```bash
 shopify-cli
 ```
 
-> 💡 Asegúrate de tener `~/go/bin` en tu PATH. Si no funciona, agrega esto a tu `.bashrc` o `.zshrc`:
-> ```bash
-> export PATH=$PATH:~/go/bin
-> ```
+> **Requisito:** Necesitas tener [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) instalado: `npm install -g @shopify/cli`
 
 ---
 
