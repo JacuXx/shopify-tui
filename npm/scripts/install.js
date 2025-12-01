@@ -7,6 +7,10 @@ const { execSync } = require('child_process');
 const VERSION = '1.0.0';
 const REPO = 'JacuXx/shopify-tui';
 
+// URL de descarga
+const getUrl = (binaryName) => 
+  `https://github.com/${REPO}/releases/download/v${VERSION}/${binaryName}`;
+
 // Mapeo de plataforma/arquitectura a nombre de binario
 function getBinaryName() {
   const platform = os.platform();
@@ -35,7 +39,7 @@ function getBinaryName() {
   return `shopify-cli-${p}-${a}${ext}`;
 }
 
-// Descargar archivo
+// Descargar archivo con progreso
 function download(url, dest) {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest);
@@ -53,8 +57,24 @@ function download(url, dest) {
           return;
         }
         
+        const totalSize = parseInt(response.headers['content-length'], 10);
+        let downloaded = 0;
+        let lastPercent = 0;
+        
+        response.on('data', (chunk) => {
+          downloaded += chunk.length;
+          if (totalSize) {
+            const percent = Math.floor((downloaded / totalSize) * 100);
+            if (percent >= lastPercent + 10) {
+              process.stdout.write(`\r   Descargando: ${percent}%`);
+              lastPercent = percent;
+            }
+          }
+        });
+        
         response.pipe(file);
         file.on('finish', () => {
+          if (totalSize) process.stdout.write(`\r   Descargando: 100%\n`);
           file.close();
           resolve();
         });
@@ -80,10 +100,9 @@ async function install() {
     return;
   }
   
-  const url = `https://github.com/${REPO}/releases/download/v${VERSION}/${binaryName}`;
+  const url = getUrl(binaryName);
   
-  console.log('📦 Descargando shopify-cli...');
-  console.log(`   ${url}`);
+  console.log('📦 Descargando shopify-cli (~6MB)...');
   
   try {
     await download(url, destPath);
