@@ -298,11 +298,11 @@ func (m Model) vistaLogs() string {
 
 	// Header
 	if servidor != nil && servidor.Activo {
-		b.WriteString(estiloExito.Render("🟢 " + m.tiendaParaDev.Nombre + " - Servidor activo"))
+		b.WriteString(estiloExito.Render(Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " - Servidor activo"))
 		b.WriteString("\n")
 		b.WriteString(estiloInfo.Render("   " + servidor.URL))
 	} else {
-		b.WriteString(estiloError.Render("🔴 " + m.tiendaParaDev.Nombre + " - Servidor detenido"))
+		b.WriteString(estiloError.Render(Icons.Stop + " " + m.tiendaParaDev.Nombre + " - Servidor detenido"))
 	}
 	b.WriteString("\n")
 	b.WriteString(strings.Repeat("─", 60))
@@ -377,9 +377,11 @@ func (m Model) vistaLogs() string {
 	}
 
 	// Ayuda - las teclas se envían a Shopify CLI excepto las de control
-	b.WriteString(estiloInfo.Render("🎮 MODO INTERACTIVO - Las teclas se envían a Shopify CLI"))
+	b.WriteString(estiloInfo.Render(Icons.Terminal + " MODO INTERACTIVO - Las teclas se envían a Shopify CLI"))
 	b.WriteString("\n")
-	b.WriteString(estiloAyuda.Render("Ctrl+Q: volver al menú • Ctrl+S: detener • PgUp/PgDn: scroll"))
+	b.WriteString(estiloAyuda.Render("Scroll: j/k, ↑/↓, PgUp/PgDn, mouse wheel"))
+	b.WriteString("\n")
+	b.WriteString(estiloAyuda.Render("g: inicio • G: final • Ctrl+Q: volver • Ctrl+S: detener"))
 
 	return b.String()
 }
@@ -388,7 +390,7 @@ func (m Model) vistaLogs() string {
 func (m Model) vistaServidores() string {
 	var b strings.Builder
 
-	b.WriteString(estiloTitulo.Render("📺 Servidores Activos"))
+	b.WriteString(estiloTitulo.Render(Icons.Logs + " Servidores Activos"))
 	b.WriteString("\n\n")
 
 	servidores := ObtenerGestor().ObtenerServidoresActivos()
@@ -396,7 +398,7 @@ func (m Model) vistaServidores() string {
 	if len(servidores) == 0 {
 		b.WriteString(estiloAyuda.Render("No hay servidores corriendo."))
 		b.WriteString("\n")
-		b.WriteString(estiloAyuda.Render("Inicia uno desde '🚀 Iniciar servidor (background)'"))
+		b.WriteString(estiloAyuda.Render("Inicia uno desde '" + Icons.Rocket + " Iniciar servidor'"))
 		b.WriteString("\n\n")
 		b.WriteString(estiloAyuda.Render("esc: volver al menú"))
 		return estiloContenedor.Render(b.String())

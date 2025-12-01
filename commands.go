@@ -34,7 +34,7 @@ func ejecutarShopifyLogin() tea.Cmd {
 		if err != nil {
 			return errorMsg{err: err}
 		}
-		return comandoTerminadoMsg{resultado: "✅ Sesión iniciada correctamente"}
+		return comandoTerminadoMsg{resultado: IconSuccess("Sesión iniciada correctamente")}
 	})
 }
 
@@ -49,7 +49,7 @@ func ejecutarShopifyPull(storeURL string, directorio string) tea.Cmd {
 		if err != nil {
 			return errorMsg{err: err}
 		}
-		return comandoTerminadoMsg{resultado: "✅ Tema descargado correctamente"}
+		return comandoTerminadoMsg{resultado: IconSuccess("Tema descargado correctamente")}
 	})
 }
 
@@ -62,7 +62,7 @@ func ejecutarThemeDev(storeURL string, directorio string) tea.Cmd {
 		if err != nil {
 			return errorMsg{err: err}
 		}
-		return comandoTerminadoMsg{resultado: "✅ Servidor de desarrollo cerrado"}
+		return comandoTerminadoMsg{resultado: IconSuccess("Servidor de desarrollo cerrado")}
 	})
 }
 
@@ -79,7 +79,7 @@ func ejecutarGitClone(gitURL string, directorio string) tea.Cmd {
 		if err != nil {
 			return errorMsg{err: err}
 		}
-		return comandoTerminadoMsg{resultado: "✅ Repositorio clonado correctamente"}
+		return comandoTerminadoMsg{resultado: IconSuccess("Repositorio clonado correctamente")}
 	})
 }
 
@@ -115,7 +115,7 @@ func ejecutarDescargaTema(tienda Tienda) tea.Cmd {
 				return errorMsg{err: err}
 			}
 			return comandoTerminadoMsg{
-				resultado: "✅ Tienda configurada correctamente",
+				resultado: IconSuccess("Tienda configurada correctamente"),
 				tienda:    &tienda,
 			}
 		})()
@@ -141,7 +141,7 @@ func ejecutarDescargaConExec(tienda Tienda, directorio string) tea.Cmd {
 			return errorMsg{err: err}
 		}
 		return comandoTerminadoMsg{
-			resultado: "✅ Tienda configurada correctamente",
+			resultado: IconSuccess("Tienda configurada correctamente"),
 			tienda:    &t,
 		}
 	})
@@ -157,7 +157,7 @@ func ejecutarThemeDevInteractivo(tienda Tienda) tea.Cmd {
 		if err != nil {
 			return errorMsg{err: err}
 		}
-		return comandoTerminadoMsg{resultado: "✅ Servidor de desarrollo cerrado"}
+		return comandoTerminadoMsg{resultado: IconSuccess("Servidor de desarrollo cerrado")}
 	})
 }
 
@@ -171,7 +171,7 @@ func ejecutarThemePull(tienda Tienda) tea.Cmd {
 			return errorMsg{err: err}
 		}
 		return comandoTerminadoMsg{
-			resultado:       "✅ Cambios descargados correctamente",
+			resultado:       IconSuccess("Cambios descargados correctamente"),
 			volverAOpciones: true,
 		}
 	})
@@ -187,7 +187,7 @@ func ejecutarThemePush(tienda Tienda) tea.Cmd {
 			return errorMsg{err: err}
 		}
 		return comandoTerminadoMsg{
-			resultado:       "✅ Cambios subidos correctamente",
+			resultado:       IconSuccess("Cambios subidos correctamente"),
 			volverAOpciones: true,
 		}
 	})
@@ -205,7 +205,7 @@ func ejecutarAbrirEditor(tienda Tienda) tea.Cmd {
 			return errorMsg{err: err}
 		}
 		return comandoTerminadoMsg{
-			resultado:       "✅ Editor abierto",
+			resultado:       IconSuccess("Editor abierto"),
 			volverAOpciones: true,
 		}
 	})
@@ -222,8 +222,8 @@ func ejecutarAbrirTerminal(tienda Tienda) tea.Cmd {
 
 	// Mostrar mensaje de cómo salir
 	fmt.Println("\n╭─────────────────────────────────────────────────╮")
-	fmt.Println("│  📂 Terminal abierta en: " + tienda.Nombre)
-	fmt.Println("│  💡 Escribe 'exit' o presiona Ctrl+D para volver")
+	fmt.Println("│  " + Icons.Folder + " Terminal abierta en: " + tienda.Nombre)
+	fmt.Println("│  " + Icons.Info + " Escribe 'exit' o presiona Ctrl+D para volver")
 	fmt.Println("╰─────────────────────────────────────────────────╯\n")
 
 	// Crear comando que abre shell en el directorio
@@ -235,7 +235,7 @@ func ejecutarAbrirTerminal(tienda Tienda) tea.Cmd {
 			return errorMsg{err: err}
 		}
 		return comandoTerminadoMsg{
-			resultado:       "✅ Terminal cerrada",
+			resultado:       IconSuccess("Terminal cerrada"),
 			volverAOpciones: true,
 		}
 	})

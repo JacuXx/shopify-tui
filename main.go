@@ -11,6 +11,9 @@ import (
 )
 
 func main() {
+	// Inicializar sistema de iconos (detecta Nerd Fonts)
+	InitIcons()
+	
 	// Crear el programa Bubbletea
 	// tea.NewProgram recibe el modelo inicial
 	// Las opciones adicionales configuran comportamiento especial:

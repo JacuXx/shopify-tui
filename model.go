@@ -92,14 +92,14 @@ type itemTienda struct {
 func (i itemTienda) Title() string {
 	// Mostrar indicador si tiene servidor activo
 	if ObtenerGestor().TieneServidorActivo(i.tienda.Nombre) {
-		return "🟢 " + i.tienda.Nombre
+		return Icons.ServerOn + " " + i.tienda.Nombre
 	}
 	return i.tienda.Nombre
 }
 func (i itemTienda) Description() string {
-	metodo := "📥 pull"
+	metodo := Icons.Download + " pull"
 	if i.tienda.Metodo == MetodoGitClone {
-		metodo = "🔗 git"
+		metodo = Icons.Git + " git"
 	}
 	
 	// Mostrar URL del servidor si está activo
@@ -140,7 +140,7 @@ func modeloInicial() Model {
 
 	// === Crear la lista del menú ===
 	lista := list.New(items, list.NewDefaultDelegate(), 50, 14)
-	lista.Title = "🛒 Shopify TUI"
+	lista.Title = Icons.App + " Shopify TUI"
 	lista.SetShowStatusBar(false)
 	lista.SetFilteringEnabled(false)
 
@@ -162,23 +162,23 @@ func modeloInicial() Model {
 func crearMenuPrincipal() []list.Item {
 	return []list.Item{
 		itemMenu{
-			titulo: "🔐 Iniciar sesión en Shopify",
+			titulo: Icons.Login + " Iniciar sesión en Shopify",
 			desc:   "Abre el navegador para autenticarte con tu cuenta",
 		},
 		itemMenu{
-			titulo: "➕ Agregar tienda",
+			titulo: Icons.Add + " Agregar tienda",
 			desc:   "Guardar una nueva tienda y descargar su tema",
 		},
 		itemMenu{
-			titulo: "🛠️ Opciones de desarrollo",
+			titulo: Icons.Server + " Opciones de desarrollo",
 			desc:   "Iniciar servidor de desarrollo local",
 		},
 		itemMenu{
-			titulo: "📺 Ver servidores activos",
+			titulo: Icons.Logs + " Ver servidores activos",
 			desc:   "Gestionar servidores corriendo en background",
 		},
 		itemMenu{
-			titulo: "❌ Salir",
+			titulo: Icons.Exit + " Salir",
 			desc:   "Cerrar la aplicación (detiene servidores en background)",
 		},
 	}
@@ -197,11 +197,11 @@ func crearListaTiendas(tiendas []Tienda) []list.Item {
 func crearListaMetodos() []list.Item {
 	return []list.Item{
 		itemMenu{
-			titulo: "📥 Shopify Pull",
+			titulo: Icons.Download + " Shopify Pull",
 			desc:   "Descargar tema directamente desde Shopify (shopify theme pull)",
 		},
 		itemMenu{
-			titulo: "🔗 Git Clone",
+			titulo: Icons.Git + " Git Clone",
 			desc:   "Clonar desde un repositorio Git (SSH o HTTPS)",
 		},
 	}
@@ -212,19 +212,19 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 	// Opciones comunes siempre disponibles
 	opcionesComunes := []list.Item{
 		itemMenu{
-			titulo: "📥 Bajar cambios",
+			titulo: Icons.Download + " Bajar cambios",
 			desc:   "Descargar cambios del tema (theme pull)",
 		},
 		itemMenu{
-			titulo: "📤 Pushear cambios",
+			titulo: Icons.Upload + " Pushear cambios",
 			desc:   "Subir cambios al tema (theme push)",
 		},
 		itemMenu{
-			titulo: "📝 Abrir editor de código",
+			titulo: Icons.Editor + " Abrir editor de código",
 			desc:   "Abrir el proyecto en tu editor (VS Code, etc.)",
 		},
 		itemMenu{
-			titulo: "💻 Abrir terminal",
+			titulo: Icons.Terminal + " Abrir terminal",
 			desc:   "Abrir una terminal en el directorio del tema",
 		},
 	}
@@ -233,11 +233,11 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 		// Ya hay un servidor corriendo - mostrar opciones de servidor + comunes
 		items := []list.Item{
 			itemMenu{
-				titulo: "📺 Ver logs en vivo",
+				titulo: Icons.Logs + " Ver logs en vivo",
 				desc:   "Ver los logs del servidor (Ctrl+Q para volver)",
 			},
 			itemMenu{
-				titulo: "🛑 Detener servidor",
+				titulo: Icons.Stop + " Detener servidor",
 				desc:   "Terminar el servidor de desarrollo actual",
 			},
 		}
@@ -246,7 +246,7 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 	// No hay servidor - mostrar opción para iniciar + comunes
 	items := []list.Item{
 		itemMenu{
-			titulo: "🚀 Iniciar servidor",
+			titulo: Icons.Rocket + " Iniciar servidor",
 			desc:   "Ejecutar theme dev y ver logs en tiempo real",
 		},
 	}
@@ -257,7 +257,7 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 func (m *Model) recrearMenuPrincipal() {
 	items := crearMenuPrincipal()
 	m.lista = list.New(items, list.NewDefaultDelegate(), 50, 16)
-	m.lista.Title = "🛒 Shopify TUI"
+	m.lista.Title = Icons.App + " Shopify TUI"
 	m.lista.SetShowStatusBar(false)
 	m.lista.SetFilteringEnabled(false)
 }
