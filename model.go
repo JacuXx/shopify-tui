@@ -214,7 +214,7 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 		return []list.Item{
 			itemMenu{
 				titulo: "📺 Ver logs en vivo",
-				desc:   "Ver los logs del servidor (q o esc para volver)",
+				desc:   "Ver los logs del servidor (Ctrl+Q para volver)",
 			},
 			itemMenu{
 				titulo: "🛑 Detener servidor",
@@ -222,15 +222,11 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 			},
 		}
 	}
-	// No hay servidor - mostrar opciones para iniciar
+	// No hay servidor - mostrar opción para iniciar
 	return []list.Item{
 		itemMenu{
-			titulo: "🔄 Iniciar en background",
-			desc:   "El servidor corre en segundo plano, puedes seguir usando el CLI",
-		},
-		itemMenu{
-			titulo: "🖥️ Iniciar interactivo",
-			desc:   "Ver logs directamente en la terminal (Ctrl+C para volver al menú)",
+			titulo: "🚀 Iniciar servidor",
+			desc:   "Ejecutar theme dev y ver logs en tiempo real",
 		},
 	}
 }

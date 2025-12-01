@@ -416,21 +416,8 @@ func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
 			gestor := ObtenerGestor()
 
 			switch item.titulo {
-			case "🔄 Iniciar en background":
-				// Iniciar servidor en background
-				servidor, err := gestor.IniciarServidor(m.tiendaParaDev)
-				if err != nil {
-					m.mensaje = "❌ " + err.Error()
-					return m, nil
-				}
-				// Después de iniciar, ir a la vista de logs
-				m.mensaje = "✅ Servidor iniciado en " + servidor.URL
-				m.vista = VistaLogs
-				m.logsScroll = 0
-				return m, tickCmd()
-
-			case "🖥️ Iniciar interactivo":
-				// Iniciar servidor en background y mostrar logs
+			case "🚀 Iniciar servidor":
+				// Iniciar servidor y mostrar logs
 				servidor, err := gestor.IniciarServidor(m.tiendaParaDev)
 				if err != nil {
 					m.mensaje = "❌ " + err.Error()
