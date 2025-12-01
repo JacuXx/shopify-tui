@@ -1,63 +1,43 @@
-# 🛒 Shopify TUI
+# 🛒 Shopify CLI TUI
 
 CLI interactivo tipo Vim para gestionar tiendas Shopify. Permite iniciar sesión, guardar tiendas con sus archivos de tema (via Shopify Pull o Git Clone) y ejecutar servidores de desarrollo local de forma rápida.
+
+## 🚀 Instalación
+
+### Requisitos previos
+- [Go 1.21+](https://go.dev/dl/)
+- [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) (`npm install -g @shopify/cli`)
+
+### Instalar (1 comando)
+
+```bash
+go install github.com/JacuXx/shopify-cli@latest
+```
+
+### Ejecutar
+
+```bash
+shopify-cli
+```
+
+> 💡 Asegúrate de tener `~/go/bin` en tu PATH. Si no funciona, agrega esto a tu `.bashrc` o `.zshrc`:
+> ```bash
+> export PATH=$PATH:~/go/bin
+> ```
+
+---
 
 ## ✨ Características
 
 - 🔐 **Login con Shopify** - Autenticación OAuth vía navegador
 - 📦 **Gestión de tiendas** - Guarda múltiples tiendas para acceso rápido
 - 📥 **Shopify Pull** - Descarga temas directamente desde Shopify
+- 📤 **Theme Push** - Sube cambios al tema
 - 🔗 **Git Clone** - Clona temas desde repositorios Git (SSH o HTTPS)
-- 🚀 **Theme Dev en Background** - Servidores corren en segundo plano
-- 📺 **Gestión de Servidores** - Ve y controla servidores activos (un servidor por tienda)
+- 🚀 **Theme Dev** - Servidor de desarrollo con logs en tiempo real
+- 📝 **Abrir Editor** - Abre VS Code en el directorio del tema
+- 💻 **Terminal integrada** - Abre terminal para comandos adicionales
 - ⌨️ **Navegación tipo Vim** - j/k para navegar, Enter para seleccionar
-
-## 📁 Estructura del Proyecto
-
-```
-shopify-tui/
-├── main.go      # Punto de entrada
-├── model.go     # Estado de la app (Model)
-├── update.go    # Manejo de eventos (Update)
-├── view.go      # Renderizado de UI (View)
-├── store.go     # Persistencia JSON y manejo de directorios
-├── commands.go  # Ejecución de Shopify CLI y Git
-├── server.go    # Gestión de servidores en background
-├── go.mod       # Dependencias
-└── go.sum       # Checksums
-```
-
-## 🚀 Instalación
-
-### Requisitos
-- Go 1.21 o superior
-- Shopify CLI instalado (`npm install -g @shopify/cli`)
-
-### Compilar
-
-```bash
-# Clonar o navegar al proyecto
-cd shopify-tui
-
-# Compilar
-go build -o shopify-tui .
-
-# Ejecutar
-./shopify-tui
-```
-
-### Instalar globalmente
-
-```bash
-# Esto instala el binario en ~/go/bin/
-go install .
-
-# Asegúrate de tener ~/go/bin en tu PATH
-export PATH=$PATH:~/go/bin
-
-# Ahora puedes ejecutar desde cualquier lugar
-shopify-tui
-```
 
 ## ⌨️ Atajos de Teclado
 
