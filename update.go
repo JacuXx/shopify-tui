@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -57,10 +56,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.mensaje = ""
 				// Recrear lista de métodos
 				items := crearListaMetodos()
-				m.lista = list.New(items, list.NewDefaultDelegate(), 50, 10)
-				m.lista.Title = Icons.Download + " Método de descarga"
-				m.lista.SetShowStatusBar(false)
-				m.lista.SetFilteringEnabled(false)
+				m.lista = crearLista(items, Icons.Download+" Método de descarga", m.ancho, m.alto)
 			case VistaSeleccionarTienda:
 				m.vista = VistaMenu
 				m.mensaje = ""
@@ -69,24 +65,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.vista = VistaSeleccionarTienda
 				m.mensaje = ""
 				items := crearListaTiendas(m.tiendas)
-				m.lista = list.New(items, list.NewDefaultDelegate(), 50, 14)
-				m.lista.Title = Icons.Server + " Selecciona una tienda"
-				m.lista.SetShowStatusBar(false)
-				m.lista.SetFilteringEnabled(false)
+				m.lista = crearLista(items, Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
 			case VistaLogs:
 				// Volver al menú de modos de esta tienda
 				m.vista = VistaSeleccionarModo
 				gestor := ObtenerGestor()
 				tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
 				items := crearListaModos(m.tiendaParaDev, tieneServidor)
-				m.lista = list.New(items, list.NewDefaultDelegate(), 55, 10)
+				titulo := Icons.Server + " " + m.tiendaParaDev.Nombre
 				if tieneServidor {
-					m.lista.Title = Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " (servidor activo)"
-				} else {
-					m.lista.Title = Icons.Server + " " + m.tiendaParaDev.Nombre
+					titulo = Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " (servidor activo)"
 				}
-				m.lista.SetShowStatusBar(false)
-				m.lista.SetFilteringEnabled(false)
+				m.lista = crearLista(items, titulo, m.ancho, m.alto)
 				m.mensaje = ""
 			case VistaServidores:
 				m.vista = VistaMenu
@@ -112,14 +102,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			gestor := ObtenerGestor()
 			tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
 			items := crearListaModos(m.tiendaParaDev, tieneServidor)
-			m.lista = list.New(items, list.NewDefaultDelegate(), 55, 14)
+			titulo := Icons.Server + " " + m.tiendaParaDev.Nombre
 			if tieneServidor {
-				m.lista.Title = Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " (servidor activo)"
-			} else {
-				m.lista.Title = Icons.Server + " " + m.tiendaParaDev.Nombre
+				titulo = Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " (servidor activo)"
 			}
-			m.lista.SetShowStatusBar(false)
-			m.lista.SetFilteringEnabled(false)
+			m.lista = crearLista(items, titulo, m.ancho, m.alto)
 		} else {
 			// Volver al menú principal
 			m.vista = VistaMenu
@@ -197,10 +184,7 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.vista = VistaSeleccionarTienda
 				items := crearListaTiendas(m.tiendas)
-				m.lista = list.New(items, list.NewDefaultDelegate(), 50, 14)
-				m.lista.Title = Icons.Server + " Selecciona una tienda"
-				m.lista.SetShowStatusBar(false)
-				m.lista.SetFilteringEnabled(false)
+				m.lista = crearLista(items, Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
 				m.mensaje = ""
 				return m, nil
 
@@ -269,10 +253,7 @@ func (m Model) updateAgregarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Ir a seleccionar método
 			m.vista = VistaSeleccionarMetodo
 			items := crearListaMetodos()
-			m.lista = list.New(items, list.NewDefaultDelegate(), 50, 10)
-			m.lista.Title = Icons.Download + " Método de descarga"
-			m.lista.SetShowStatusBar(false)
-			m.lista.SetFilteringEnabled(false)
+			m.lista = crearLista(items, Icons.Download+" Método de descarga", m.ancho, m.alto)
 			m.mensaje = ""
 			return m, nil
 		}
@@ -378,14 +359,11 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Ir a seleccionar modo
 			m.vista = VistaSeleccionarModo
 			items := crearListaModos(item.tienda, tieneServidor)
-			m.lista = list.New(items, list.NewDefaultDelegate(), 55, 10)
+			titulo := Icons.Server + " " + item.tienda.Nombre
 			if tieneServidor {
-				m.lista.Title = Icons.ServerOn + " " + item.tienda.Nombre + " (servidor activo)"
-			} else {
-				m.lista.Title = Icons.Server + " " + item.tienda.Nombre
+				titulo = Icons.ServerOn + " " + item.tienda.Nombre + " (servidor activo)"
 			}
-			m.lista.SetShowStatusBar(false)
-			m.lista.SetFilteringEnabled(false)
+			m.lista = crearLista(items, titulo, m.ancho, m.alto)
 			m.mensaje = ""
 			return m, nil
 
@@ -409,10 +387,7 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				items := crearListaTiendas(m.tiendas)
-				m.lista = list.New(items, list.NewDefaultDelegate(), 50, 14)
-				m.lista.Title = Icons.Server + " Selecciona una tienda"
-				m.lista.SetShowStatusBar(false)
-				m.lista.SetFilteringEnabled(false)
+				m.lista = crearLista(items, Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
 			}
 			return m, nil
 		}
@@ -615,14 +590,11 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 			gestor := ObtenerGestor()
 			tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
 			items := crearListaModos(m.tiendaParaDev, tieneServidor)
-			m.lista = list.New(items, list.NewDefaultDelegate(), 55, 10)
+			titulo := Icons.Server + " " + m.tiendaParaDev.Nombre
 			if tieneServidor {
-				m.lista.Title = Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " (servidor activo)"
-			} else {
-				m.lista.Title = Icons.Server + " " + m.tiendaParaDev.Nombre
+				titulo = Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " (servidor activo)"
 			}
-			m.lista.SetShowStatusBar(false)
-			m.lista.SetFilteringEnabled(false)
+			m.lista = crearLista(items, titulo, m.ancho, m.alto)
 			m.mensaje = ""
 			// Reactivar mouse al salir
 			return m, tea.EnableMouseCellMotion

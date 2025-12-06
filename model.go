@@ -139,11 +139,8 @@ func modeloInicial() Model {
 	// === Crear las opciones del menú principal ===
 	items := crearMenuPrincipal()
 
-	// === Crear la lista del menú ===
-	lista := list.New(items, list.NewDefaultDelegate(), 50, 14)
-	lista.Title = Icons.App + " Shopify TUI"
-	lista.SetShowStatusBar(false)
-	lista.SetFilteringEnabled(false)
+	// === Crear la lista del menú (sin paginación) ===
+	lista := crearLista(items, Icons.App+" Shopify TUI", 0, 0)
 
 	// === Cargar tiendas guardadas del archivo JSON ===
 	tiendas, _ := cargarTiendas()
@@ -254,11 +251,33 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 	return append(items, opcionesComunes...)
 }
 
+// crearLista crea una lista configurada sin paginación (muestra todos los items)
+func crearLista(items []list.Item, titulo string, ancho, alto int) list.Model {
+	// Calcular altura basada en número de items (cada item ocupa ~2 líneas + header)
+	alturaItems := len(items)*2 + 4
+	if alto > 0 && alto-6 > alturaItems {
+		alturaItems = alto - 6
+	}
+	if alturaItems < 10 {
+		alturaItems = 10
+	}
+	
+	anchoLista := 55
+	if ancho > 0 && ancho-4 > anchoLista {
+		anchoLista = ancho - 4
+	}
+	
+	lista := list.New(items, list.NewDefaultDelegate(), anchoLista, alturaItems)
+	lista.Title = titulo
+	lista.SetShowStatusBar(false)
+	lista.SetFilteringEnabled(false)
+	lista.SetShowPagination(false) // Nunca mostrar dots de paginación
+	return lista
+}
+
 // recrearMenuPrincipal recrea la lista del menú principal
 func (m *Model) recrearMenuPrincipal() {
 	items := crearMenuPrincipal()
-	m.lista = list.New(items, list.NewDefaultDelegate(), 50, 16)
-	m.lista.Title = Icons.App + " Shopify TUI"
-	m.lista.SetShowStatusBar(false)
-	m.lista.SetFilteringEnabled(false)
+	m.lista = crearLista(items, Icons.App+" Shopify TUI", m.ancho, m.alto)
 }
+
