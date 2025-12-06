@@ -160,24 +160,24 @@ func modeloInicial() Model {
 func crearMenuPrincipal() []list.Item {
 	return []list.Item{
 		itemMenu{
-			titulo: Icons.Login + " Iniciar sesión en Shopify",
-			desc:   "Abre el navegador para autenticarte con tu cuenta",
+			titulo: Icons.Login + " Iniciar sesión",
+			desc:   "Autenticarte en Shopify",
 		},
 		itemMenu{
 			titulo: Icons.Add + " Agregar tienda",
-			desc:   "Guardar una nueva tienda y descargar su tema",
+			desc:   "Registrar tienda y descargar tema",
 		},
 		itemMenu{
-			titulo: Icons.Server + " Opciones de desarrollo",
-			desc:   "Iniciar servidor de desarrollo local",
+			titulo: Icons.Server + " Desarrollo local",
+			desc:   "Iniciar servidor",
 		},
 		itemMenu{
-			titulo: Icons.Logs + " Ver servidores activos",
-			desc:   "Gestionar servidores corriendo en background",
+			titulo: Icons.Logs + " Servidores activos",
+			desc:   "Ver y administrar procesos",
 		},
 		itemMenu{
 			titulo: Icons.Exit + " Salir",
-			desc:   "Cerrar la aplicación (detiene servidores en background)",
+			desc:   "Cerrar la aplicación",
 		},
 	}
 }
@@ -196,11 +196,11 @@ func crearListaMetodos() []list.Item {
 	return []list.Item{
 		itemMenu{
 			titulo: Icons.Download + " Shopify Pull",
-			desc:   "Descargar tema directamente desde Shopify (shopify theme pull)",
+			desc:   "Desde Shopify directo",
 		},
 		itemMenu{
 			titulo: Icons.Git + " Git Clone",
-			desc:   "Clonar desde un repositorio Git (SSH o HTTPS)",
+			desc:   "Desde repositorio Git",
 		},
 	}
 }
@@ -210,20 +210,20 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 	// Opciones comunes siempre disponibles
 	opcionesComunes := []list.Item{
 		itemMenu{
-			titulo: Icons.Download + " Bajar cambios",
-			desc:   "Descargar cambios del tema (theme pull)",
+			titulo: Icons.Download + " Pull",
+			desc:   "Bajar cambios del tema",
 		},
 		itemMenu{
-			titulo: Icons.Upload + " Pushear cambios",
-			desc:   "Subir cambios al tema (theme push)",
+			titulo: Icons.Upload + " Push",
+			desc:   "Subir cambios al tema",
 		},
 		itemMenu{
-			titulo: Icons.Editor + " Abrir editor de código",
-			desc:   "Abrir el proyecto en tu editor (VS Code, etc.)",
+			titulo: Icons.Editor + " Editor",
+			desc:   "Abrir en VS Code",
 		},
 		itemMenu{
-			titulo: Icons.Terminal + " Abrir terminal",
-			desc:   "Abrir una terminal en el directorio del tema",
+			titulo: Icons.Terminal + " Terminal",
+			desc:   "Abrir terminal aquí",
 		},
 	}
 
@@ -231,12 +231,12 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 		// Ya hay un servidor corriendo - mostrar opciones de servidor + comunes
 		items := []list.Item{
 			itemMenu{
-				titulo: Icons.Logs + " Ver logs en vivo",
-				desc:   "Ver los logs del servidor (Ctrl+Q para volver)",
+				titulo: Icons.Logs + " Ver logs",
+				desc:   "Logs en tiempo real",
 			},
 			itemMenu{
-				titulo: Icons.Stop + " Detener servidor",
-				desc:   "Terminar el servidor de desarrollo actual",
+				titulo: Icons.Stop + " Detener",
+				desc:   "Parar servidor",
 			},
 		}
 		return append(items, opcionesComunes...)
@@ -244,8 +244,8 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 	// No hay servidor - mostrar opción para iniciar + comunes
 	items := []list.Item{
 		itemMenu{
-			titulo: Icons.Rocket + " Iniciar servidor",
-			desc:   "Ejecutar theme dev y ver logs en tiempo real",
+			titulo: Icons.Rocket + " Iniciar",
+			desc:   "Ejecutar theme dev",
 		},
 	}
 	return append(items, opcionesComunes...)

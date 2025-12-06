@@ -177,7 +177,7 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.tiendaTemporal = Tienda{}
 				return m, nil
 
-			case strings.Contains(titulo, "Opciones de desarrollo"):
+			case strings.Contains(titulo, "Desarrollo local"):
 				if len(m.tiendas) == 0 {
 					m.mensaje = IconWarning("No hay tiendas guardadas. Agrega una primero.")
 					return m, nil
@@ -188,7 +188,7 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.mensaje = ""
 				return m, nil
 
-			case strings.Contains(titulo, "Ver servidores"):
+			case strings.Contains(titulo, "Servidores activos"):
 				m.vista = VistaServidores
 				m.mensaje = ""
 				return m, nil
@@ -413,7 +413,7 @@ func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
 			titulo := item.titulo
 
 			switch {
-			case strings.Contains(titulo, "Iniciar servidor"):
+			case strings.Contains(titulo, "Iniciar"):
 				// Iniciar servidor y mostrar logs
 				servidor, err := gestor.IniciarServidor(m.tiendaParaDev)
 				if err != nil {
@@ -432,7 +432,7 @@ func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.mensaje = ""
 				return m, tickCmd()
 
-			case strings.Contains(titulo, "Detener servidor"):
+			case strings.Contains(titulo, "Detener"):
 				// Detener el servidor de esta tienda
 				if err := gestor.DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
 					m.mensaje = IconError(err.Error())
@@ -443,19 +443,19 @@ func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.recrearMenuPrincipal()
 				return m, nil
 
-			case strings.Contains(titulo, "Bajar cambios"):
+			case strings.Contains(titulo, "Pull"):
 				// Ejecutar theme pull
 				return m, ejecutarThemePull(m.tiendaParaDev)
 
-			case strings.Contains(titulo, "Pushear cambios"):
+			case strings.Contains(titulo, "Push"):
 				// Ejecutar theme push
 				return m, ejecutarThemePush(m.tiendaParaDev)
 
-			case strings.Contains(titulo, "Abrir editor"):
+			case strings.Contains(titulo, "Editor"):
 				// Abrir VS Code (o el editor configurado)
 				return m, ejecutarAbrirEditor(m.tiendaParaDev)
 
-			case strings.Contains(titulo, "Abrir terminal"):
+			case strings.Contains(titulo, "Terminal"):
 				// Abrir terminal en el directorio del tema
 				return m, ejecutarAbrirTerminal(m.tiendaParaDev)
 			}
