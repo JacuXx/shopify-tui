@@ -37,13 +37,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q":
-			if m.vista == VistaMenu {
-				return m, tea.Quit
-			}
-		case "esc":
+		case "ctrl+q":
+			// Salir de la aplicación
+			ObtenerGestor().DetenerTodos()
+			return m, tea.Quit
+		case "q", "esc":
 			// Volver según la vista actual
 			switch m.vista {
+			case VistaMenu:
+				// En el menú principal, no hacer nada con q/esc
+				return m, nil
 			case VistaAgregarTienda:
 				m.vista = VistaMenu
 				m.mensaje = ""
@@ -224,11 +227,6 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.vista = VistaServidores
 				m.mensaje = ""
 				return m, nil
-
-			case strings.Contains(titulo, "Salir"):
-				// Detener todos los servidores antes de salir
-				ObtenerGestor().DetenerTodos()
-				return m, tea.Quit
 			}
 		}
 	}

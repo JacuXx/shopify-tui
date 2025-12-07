@@ -194,7 +194,7 @@ func (m Model) vistaMenu() string {
 	s += "\n" + estiloAyuda.Render(
 		fmt.Sprintf("Tiendas: %d | Servidores: %d", len(m.tiendas), servidoresActivos),
 	)
-	s += "\n" + estiloAyuda.Render("Usa las teclas [A/T/D/V/Q] o j/k + enter")
+	s += "\n" + estiloAyuda.Render("[A/T/D/V] o j/k + enter | Ctrl+Q: salir")
 
 	return s
 }
@@ -275,7 +275,7 @@ func (m Model) vistaSeleccionarMetodo() string {
 		b.WriteString("\n")
 	}
 
-	b.WriteString(estiloAyuda.Render("[S]hopify Pull | [G]it Clone | esc: volver"))
+	b.WriteString(estiloAyuda.Render("[S]hopify Pull | [G]it Clone | q: volver"))
 
 	return b.String()
 }
@@ -311,7 +311,7 @@ func (m Model) vistaInputGit() string {
 		b.WriteString("\n\n")
 	}
 
-	b.WriteString(estiloAyuda.Render("enter: clonar • esc: volver"))
+	b.WriteString(estiloAyuda.Render("enter: clonar | q: volver"))
 
 	return estiloContenedor.Render(b.String())
 }
@@ -327,7 +327,7 @@ func (m Model) vistaSeleccionarTienda() string {
 		b.WriteString("\n")
 		b.WriteString(estiloAyuda.Render("Primero agrega una tienda desde el menú principal."))
 		b.WriteString("\n\n")
-		b.WriteString(estiloAyuda.Render("esc: volver al menú"))
+		b.WriteString(estiloAyuda.Render("q: volver"))
 		return estiloContenedor.Render(b.String())
 	}
 
@@ -349,7 +349,7 @@ func (m Model) vistaSeleccionarTienda() string {
 		s += "\n"
 	}
 
-	s += estiloAyuda.Render("[1-9]: selección rápida | d: eliminar | esc: volver")
+	s += estiloAyuda.Render("[1-9]: selección rápida | d: eliminar | q: volver")
 
 	return s
 }
@@ -402,9 +402,9 @@ func (m Model) vistaSeleccionarModo() string {
 
 	// Mostrar atajos disponibles
 	if tieneServidor {
-		b.WriteString(estiloAyuda.Render("[L]ogs [S]top [P]ull p[U]sh [E]ditor [T]erminal | esc: volver"))
+		b.WriteString(estiloAyuda.Render("[L]ogs [S]top [P]ull p[U]sh [E]ditor [T]erminal | q: volver"))
 	} else {
-		b.WriteString(estiloAyuda.Render("[I]niciar [P]ull p[U]sh [E]ditor [T]erminal | esc: volver"))
+		b.WriteString(estiloAyuda.Render("[I]niciar [P]ull p[U]sh [E]ditor [T]erminal | q: volver"))
 	}
 
 	return b.String()
@@ -526,7 +526,7 @@ func (m Model) vistaServidores() string {
 		b.WriteString("\n")
 		b.WriteString(estiloAyuda.Render("Inicia uno desde '" + Icons.Rocket + " Iniciar servidor'"))
 		b.WriteString("\n\n")
-		b.WriteString(estiloAyuda.Render("esc: volver al menú"))
+		b.WriteString(estiloAyuda.Render("q: volver"))
 		return estiloContenedor.Render(b.String())
 	}
 
@@ -559,7 +559,7 @@ func (m Model) vistaServidores() string {
 		b.WriteString("\n")
 	}
 
-	b.WriteString(estiloAyuda.Render("s: detener servidor • S: detener todos • esc: volver"))
+	b.WriteString(estiloAyuda.Render("s: detener | S: detener todos | q: volver"))
 
 	return estiloContenedor.Render(b.String())
 }

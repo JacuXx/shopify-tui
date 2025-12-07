@@ -181,11 +181,6 @@ func crearMenuPrincipal() []list.Item {
 			desc:   "Ver y administrar procesos",
 			atajo:  "v",
 		},
-		itemMenu{
-			titulo: Icons.Exit + " Salir",
-			desc:   "Cerrar la aplicación",
-			atajo:  "q",
-		},
 	}
 }
 
