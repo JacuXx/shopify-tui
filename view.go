@@ -149,6 +149,8 @@ func (m Model) View() string {
 		return m.vistaLogs()
 	case VistaServidores:
 		return m.vistaServidores()
+	case VistaPopup:
+		return m.vistaPopup()
 	default:
 		return m.vistaMenu()
 	}
@@ -320,7 +322,7 @@ func (m Model) vistaSeleccionarTienda() string {
 		s += "\n"
 	}
 
-	s += estiloAyuda.Render("[1-9] l/enter | d: eliminar | q: volver")
+	s += estiloAyuda.Render("[1-9] l/enter: iniciar servidor | d: eliminar | q: volver")
 
 	return s
 }
@@ -464,9 +466,7 @@ func (m Model) vistaLogs() string {
 
 	b.WriteString(estiloInfo.Render(Icons.Terminal + " MODO INTERACTIVO - Las teclas se envían a Shopify CLI"))
 	b.WriteString("\n")
-	b.WriteString(estiloAyuda.Render("Scroll: j/k, ↑/↓, PgUp/PgDn, mouse wheel"))
-	b.WriteString("\n")
-	b.WriteString(estiloAyuda.Render("v: modo selección • g: inicio • G: final • Ctrl+Q: volver"))
+	b.WriteString(estiloAyuda.Render("space/m: menú | j/k: scroll | v: seleccionar | Ctrl+Q: volver"))
 
 	return b.String()
 }
@@ -528,4 +528,146 @@ func formatearDuracion(inicio time.Time) string {
 		return fmt.Sprintf("%dm %ds", int(duracion.Minutes()), int(duracion.Seconds())%60)
 	}
 	return fmt.Sprintf("%dh %dm", int(duracion.Hours()), int(duracion.Minutes())%60)
+}
+
+var estiloPopup = lipgloss.NewStyle().
+	Border(lipgloss.RoundedBorder()).
+	BorderForeground(lipgloss.Color("#7D56F4")).
+	Padding(1, 2).
+	Background(lipgloss.Color("#1a1a2e"))
+
+var estiloPopupTitulo = lipgloss.NewStyle().
+	Bold(true).
+	Foreground(lipgloss.Color("#7D56F4")).
+	MarginBottom(1)
+
+func (m Model) vistaPopup() string {
+	gestor := ObtenerGestor()
+	tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
+
+	var opciones []itemMenu
+	if tieneServidor {
+		opciones = []itemMenu{
+			{titulo: Icons.Stop + " Detener", desc: "Parar servidor", atajo: "s"},
+			{titulo: Icons.Download + " Pull", desc: "Bajar cambios", atajo: "p"},
+			{titulo: Icons.Upload + " Push", desc: "Subir cambios", atajo: "u"},
+			{titulo: Icons.Editor + " Editor", desc: "Abrir VS Code", atajo: "e"},
+			{titulo: Icons.Terminal + " Terminal", desc: "Abrir terminal", atajo: "t"},
+		}
+	} else {
+		opciones = []itemMenu{
+			{titulo: Icons.Download + " Pull", desc: "Bajar cambios", atajo: "p"},
+			{titulo: Icons.Upload + " Push", desc: "Subir cambios", atajo: "u"},
+			{titulo: Icons.Editor + " Editor", desc: "Abrir VS Code", atajo: "e"},
+			{titulo: Icons.Terminal + " Terminal", desc: "Abrir terminal", atajo: "t"},
+		}
+	}
+
+	var popupContent strings.Builder
+	popupContent.WriteString(estiloPopupTitulo.Render(Icons.Rocket + " Acciones"))
+	popupContent.WriteString("\n\n")
+
+	for i, op := range opciones {
+		atajo := estiloAtajo.Render("[" + strings.ToUpper(op.atajo) + "]")
+		cursor := "  "
+		if i == m.popupIndex {
+			cursor = "> "
+			popupContent.WriteString(cursor + atajo + " " + estiloItemSeleccionado.Render(op.titulo) + "\n")
+		} else {
+			popupContent.WriteString(cursor + atajo + " " + estiloItemNormal.Render(op.titulo) + "\n")
+		}
+	}
+
+	popupContent.WriteString("\n")
+	popupContent.WriteString(estiloAyuda.Render("j/k navegar | l/enter ejecutar | space cerrar"))
+
+	popup := estiloPopup.Render(popupContent.String())
+
+	servidor := gestor.ObtenerServidor(m.tiendaParaDev.Nombre)
+	var header strings.Builder
+	if servidor != nil && servidor.Activo {
+		header.WriteString(estiloExito.Render(Icons.ServerOn + " " + m.tiendaParaDev.Nombre))
+		header.WriteString(" - ")
+		header.WriteString(estiloInfo.Render(servidor.URL))
+	} else {
+		header.WriteString(estiloError.Render(Icons.Stop + " " + m.tiendaParaDev.Nombre + " - Detenido"))
+	}
+	header.WriteString("\n")
+	header.WriteString(strings.Repeat("─", 50))
+	header.WriteString("\n\n")
+
+	popupAncho := lipgloss.Width(popup)
+	padding := ""
+	if m.ancho > popupAncho {
+		padding = strings.Repeat(" ", (m.ancho-popupAncho)/2)
+	}
+
+	var resultado strings.Builder
+	resultado.WriteString(header.String())
+
+	for _, linea := range strings.Split(popup, "\n") {
+		resultado.WriteString(padding + linea + "\n")
+	}
+
+	return resultado.String()
+}
+
+func (m Model) vistaLogsBase() string {
+	var b strings.Builder
+
+	servidor := ObtenerGestor().ObtenerServidor(m.tiendaParaDev.Nombre)
+
+	if servidor != nil && servidor.Activo {
+		b.WriteString(estiloExito.Render(Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " - Servidor activo"))
+		b.WriteString("\n")
+		b.WriteString(estiloInfo.Render("   " + servidor.URL))
+	} else {
+		b.WriteString(estiloError.Render(Icons.Stop + " " + m.tiendaParaDev.Nombre + " - Servidor detenido"))
+	}
+	b.WriteString("\n")
+	b.WriteString(strings.Repeat("─", 60))
+	b.WriteString("\n\n")
+
+	if servidor != nil {
+		logs := servidor.ObtenerLogs()
+
+		if len(logs) == 0 {
+			b.WriteString(estiloAyuda.Render("Esperando logs del servidor..."))
+			b.WriteString("\n")
+		} else {
+			lineasVisibles := 15
+			if m.alto > 0 {
+				lineasVisibles = m.alto - 12
+				if lineasVisibles < 5 {
+					lineasVisibles = 5
+				}
+			}
+
+			inicio := m.logsScroll
+			fin := inicio + lineasVisibles
+
+			if fin > len(logs) {
+				fin = len(logs)
+			}
+			if inicio > len(logs) {
+				inicio = len(logs)
+			}
+
+			for i := inicio; i < fin; i++ {
+				linea := logs[i]
+				if strings.Contains(linea, "error") || strings.Contains(linea, "Error") {
+					b.WriteString(estiloError.Render(linea))
+				} else if strings.Contains(linea, "http://") || strings.Contains(linea, "https://") {
+					b.WriteString(estiloExito.Render(linea))
+				} else {
+					b.WriteString(linea)
+				}
+				b.WriteString("\n")
+			}
+		}
+	} else {
+		b.WriteString(estiloError.Render("No hay servidor activo"))
+	}
+
+	return b.String()
 }

@@ -1,11 +1,25 @@
 package main
 
 import (
+	"os"
 	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+func debugLog(msg string) {
+	f, _ := os.OpenFile("/tmp/shopify-debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	defer f.Close()
+	f.WriteString(time.Now().Format("15:04:05") + " " + msg + "\n")
+}
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
 
 type tickMsg time.Time
 
@@ -89,24 +103,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.tiendas = append(m.tiendas, *msg.tienda)
 			guardarTiendas(m.tiendas)
 			m.mensaje = IconSuccess("Tienda '" + msg.tienda.Nombre + "' agregada correctamente")
+			m.vista = VistaMenu
+			m.recrearMenuPrincipal()
+			return m, nil
 		}
 
 		if msg.volverAOpciones && m.tiendaParaDev.Nombre != "" {
-
-			m.vista = VistaSeleccionarModo
-			gestor := ObtenerGestor()
-			tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
-			items := crearListaModos(m.tiendaParaDev, tieneServidor)
-			titulo := Icons.Server + " " + m.tiendaParaDev.Nombre
-			if tieneServidor {
-				titulo = Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " (servidor activo)"
-			}
-			m.lista = crearLista(items, titulo, m.ancho, m.alto)
-		} else {
-
-			m.vista = VistaMenu
-			m.recrearMenuPrincipal()
+			m.vista = VistaLogs
+			m.logsScroll = 0
+			return m, tickCmd()
 		}
+
+		m.vista = VistaMenu
+		m.recrearMenuPrincipal()
 		return m, nil
 
 	case errorMsg:
@@ -123,21 +132,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch m.vista {
 	case VistaMenu:
+		debugLog("Vista: Menu")
 		return m.updateMenu(msg)
 	case VistaAgregarTienda:
+		debugLog("Vista: AgregarTienda")
 		return m.updateAgregarTienda(msg)
 	case VistaSeleccionarMetodo:
+		debugLog("Vista: SeleccionarMetodo")
 		return m.updateSeleccionarMetodo(msg)
 	case VistaInputGit:
+		debugLog("Vista: InputGit")
 		return m.updateInputGit(msg)
 	case VistaSeleccionarTienda:
+		debugLog("Vista: SeleccionarTienda")
 		return m.updateSeleccionarTienda(msg)
 	case VistaSeleccionarModo:
+		debugLog("Vista: SeleccionarModo")
 		return m.updateSeleccionarModo(msg)
 	case VistaLogs:
 		return m.updateLogs(msg)
 	case VistaServidores:
+		debugLog("Vista: Servidores")
 		return m.updateServidores(msg)
+	case VistaPopup:
+		return m.updatePopup(msg)
 	}
 
 	return m, nil
@@ -363,48 +381,21 @@ func (m Model) updateInputGit(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
-
-	seleccionarTienda := func(indice int) (tea.Model, tea.Cmd) {
-		if indice < 0 || indice >= len(m.tiendas) {
-			return m, nil
-		}
-		tienda := m.tiendas[indice]
-
-		if !existeDirectorio(tienda.Ruta) {
-			m.mensaje = IconError("El directorio no existe: " + tienda.Ruta)
-			return m, nil
-		}
-
-		m.tiendaParaDev = tienda
-		gestor := ObtenerGestor()
-		tieneServidor := gestor.TieneServidorActivo(tienda.Nombre)
-
-		m.vista = VistaSeleccionarModo
-		items := crearListaModos(tienda, tieneServidor)
-		titulo := Icons.Server + " " + tienda.Nombre
-		if tieneServidor {
-			titulo = Icons.ServerOn + " " + tienda.Nombre + " (servidor activo)"
-		}
-		m.lista = crearLista(items, titulo, m.ancho, m.alto)
-		m.mensaje = ""
-		return m, nil
-	}
-
+	debugLog("=== updateSeleccionarTienda llamado ===")
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		key := msg.String()
+		debugLog("Tecla presionada: " + key)
+
+		var indiceSeleccionado int = -1
 
 		if len(key) == 1 && key >= "1" && key <= "9" {
-			num := int(key[0] - '1')
-			return seleccionarTienda(num)
-		}
-
-		switch key {
-		case "enter", "l":
-			return seleccionarTienda(m.lista.Index())
-
-		case "d":
-
+			indiceSeleccionado = int(key[0] - '1')
+			debugLog("Indice por número: " + key)
+		} else if key == "enter" || key == "l" {
+			indiceSeleccionado = m.lista.Index()
+			debugLog("Indice por enter/l: " + string(rune('0'+indiceSeleccionado)))
+		} else if key == "d" {
 			indice := m.lista.Index()
 			if indice >= 0 && indice < len(m.tiendas) {
 				nombreEliminada := m.tiendas[indice].Nombre
@@ -426,6 +417,46 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.lista = crearLista(items, Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
 			}
 			return m, nil
+		}
+
+		if indiceSeleccionado >= 0 && indiceSeleccionado < len(m.tiendas) {
+			tienda := m.tiendas[indiceSeleccionado]
+			debugLog("Tienda seleccionada: " + tienda.Nombre)
+
+			if !existeDirectorio(tienda.Ruta) {
+				debugLog("ERROR: Directorio no existe: " + tienda.Ruta)
+				m.mensaje = IconError("El directorio no existe: " + tienda.Ruta)
+				return m, nil
+			}
+
+			m.tiendaParaDev = tienda
+			gestor := ObtenerGestor()
+			tieneServidor := gestor.TieneServidorActivo(tienda.Nombre)
+			debugLog("Tiene servidor activo: " + string(rune('0'+boolToInt(tieneServidor))))
+
+			if tieneServidor {
+				debugLog("Yendo a VistaLogs (servidor ya activo)")
+				m.vista = VistaLogs
+				m.logsScroll = 0
+				m.mensaje = ""
+				return m, tickCmd()
+			}
+
+			debugLog("Intentando iniciar servidor...")
+			servidor, err := gestor.IniciarServidor(tienda)
+			if err != nil {
+				debugLog("ERROR iniciando servidor: " + err.Error())
+				m.mensaje = IconError(err.Error())
+				m.vista = VistaLogs
+				m.logsScroll = 0
+				return m, tickCmd()
+			}
+
+			debugLog("Servidor iniciado OK: " + servidor.URL)
+			m.mensaje = IconSuccess("Servidor iniciado en " + servidor.URL)
+			m.vista = VistaLogs
+			m.logsScroll = 0
+			return m, tickCmd()
 		}
 	}
 
@@ -636,6 +667,12 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		switch key {
+		case " ", "m", "ctrl+p":
+			m.vistaAnterior = VistaLogs
+			m.vista = VistaPopup
+			m.popupIndex = 0
+			return m, nil
+
 		case "v":
 
 			m.modoSeleccion = true
@@ -740,6 +777,127 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 			return m, nil
+		}
+	}
+
+	return m, nil
+}
+
+func crearOpcionesPopup(tieneServidor bool) []itemMenu {
+	opciones := []itemMenu{
+		{titulo: Icons.Download + " Pull", desc: "Bajar cambios", atajo: "p"},
+		{titulo: Icons.Upload + " Push", desc: "Subir cambios", atajo: "u"},
+		{titulo: Icons.Editor + " Editor", desc: "Abrir VS Code", atajo: "e"},
+		{titulo: Icons.Terminal + " Terminal", desc: "Abrir terminal", atajo: "t"},
+	}
+
+	if tieneServidor {
+		opciones = append([]itemMenu{
+			{titulo: Icons.Stop + " Detener", desc: "Parar servidor", atajo: "s"},
+		}, opciones...)
+	}
+
+	return opciones
+}
+
+func (m Model) updatePopup(msg tea.Msg) (tea.Model, tea.Cmd) {
+	gestor := ObtenerGestor()
+	tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
+	opciones := crearOpcionesPopup(tieneServidor)
+
+	ejecutarOpcion := func(indice int) (tea.Model, tea.Cmd) {
+		if indice < 0 || indice >= len(opciones) {
+			return m, nil
+		}
+
+		opcion := opciones[indice]
+		m.vista = VistaLogs
+
+		switch {
+		case strings.Contains(opcion.titulo, "Detener"):
+			if err := gestor.DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
+				m.mensaje = IconError(err.Error())
+			} else {
+				m.mensaje = Icons.Stop + " Servidor detenido"
+				m.vista = VistaMenu
+				m.recrearMenuPrincipal()
+			}
+			return m, nil
+
+		case strings.Contains(opcion.titulo, "Pull"):
+			return m, ejecutarThemePull(m.tiendaParaDev)
+
+		case strings.Contains(opcion.titulo, "Push"):
+			return m, ejecutarThemePush(m.tiendaParaDev)
+
+		case strings.Contains(opcion.titulo, "Editor"):
+			return m, ejecutarAbrirEditor(m.tiendaParaDev)
+
+		case strings.Contains(opcion.titulo, "Terminal"):
+			return m, ejecutarAbrirTerminal(m.tiendaParaDev)
+		}
+
+		return m, tickCmd()
+	}
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		key := msg.String()
+
+		switch key {
+		case "esc", "q", " ", "m", "ctrl+p":
+			m.vista = VistaLogs
+			return m, tickCmd()
+
+		case "j", "down":
+			m.popupIndex++
+			if m.popupIndex >= len(opciones) {
+				m.popupIndex = 0
+			}
+			return m, nil
+
+		case "k", "up":
+			m.popupIndex--
+			if m.popupIndex < 0 {
+				m.popupIndex = len(opciones) - 1
+			}
+			return m, nil
+
+		case "enter", "l":
+			return ejecutarOpcion(m.popupIndex)
+
+		case "s":
+			if tieneServidor {
+				for i, op := range opciones {
+					if strings.Contains(op.titulo, "Detener") {
+						return ejecutarOpcion(i)
+					}
+				}
+			}
+		case "p":
+			for i, op := range opciones {
+				if strings.Contains(op.titulo, "Pull") {
+					return ejecutarOpcion(i)
+				}
+			}
+		case "u":
+			for i, op := range opciones {
+				if strings.Contains(op.titulo, "Push") {
+					return ejecutarOpcion(i)
+				}
+			}
+		case "e":
+			for i, op := range opciones {
+				if strings.Contains(op.titulo, "Editor") {
+					return ejecutarOpcion(i)
+				}
+			}
+		case "t":
+			for i, op := range opciones {
+				if strings.Contains(op.titulo, "Terminal") {
+					return ejecutarOpcion(i)
+				}
+			}
 		}
 	}
 

@@ -16,6 +16,7 @@ const (
 	VistaSeleccionarModo
 	VistaLogs
 	VistaServidores
+	VistaPopup
 )
 
 type MetodoDescarga int
@@ -54,6 +55,8 @@ type Model struct {
 
 	logsScroll    int
 	modoSeleccion bool
+	popupIndex    int
+	vistaAnterior Vista
 }
 
 type itemMenu struct {
