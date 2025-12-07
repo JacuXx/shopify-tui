@@ -31,6 +31,8 @@ shopify-cli
 - 📦 **Gestión de tiendas** - Guarda múltiples tiendas para acceso rápido
 - 🚀 **Flujo ultra rápido** - Selecciona tienda → servidor inicia automáticamente
 - 📋 **Popup flotante** - Menú flotante con `space` o `m` para acciones rápidas
+- 🔔 **Notificación de actualizaciones** - Aviso cuando hay nueva versión disponible
+- 📝 **URL simplificado** - Solo escribe el nombre, `.myshopify.com` se agrega solo
 - 📥 **Shopify Pull** - Descarga temas directamente desde Shopify
 - 📤 **Theme Push** - Sube cambios al tema
 - 🔗 **Git Clone** - Clona temas desde repositorios Git (SSH o HTTPS)
@@ -217,6 +219,11 @@ go build -o shopify-tui .
 ---
 
 ## 📝 Changelog
+
+### v1.4.0
+- 📝 **URL simplificado** - Solo escribe el nombre de la tienda, `.myshopify.com` se agrega automáticamente
+- 🔔 **Notificación de actualizaciones** - Aviso en el menú principal cuando hay nueva versión
+- 🎨 Sufijo `.myshopify.com` se muestra fijo en color cyan al agregar tienda
 
 ### v1.3.0
 - 🚀 **Flujo ultra rápido** - Seleccionar tienda inicia servidor automáticamente
