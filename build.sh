@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Script para compilar binarios para todas las plataformas
-# Ejecutar desde el directorio raíz del proyecto
 
 set -e
 
@@ -11,10 +9,8 @@ BINARY_NAME="shopify-cli"
 
 echo "🔨 Compilando shopify-cli v${VERSION} para todas las plataformas..."
 
-# Crear directorio de salida
 mkdir -p "$OUTPUT_DIR"
 
-# Plataformas a compilar
 PLATFORMS=(
   "linux/amd64"
   "linux/arm64"

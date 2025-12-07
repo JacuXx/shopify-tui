@@ -1,24 +1,20 @@
-# Makefile para shopify-cli
 
 BINARY_NAME=shopify-cli
 INSTALL_PATH=/usr/local/bin
 
 .PHONY: build install uninstall clean
 
-# Compilar el binario
 build:
 	@echo "🔨 Compilando $(BINARY_NAME)..."
 	@go build -o $(BINARY_NAME) .
 	@echo "✅ Compilación exitosa: ./$(BINARY_NAME)"
 
-# Instalar globalmente (requiere sudo)
 install: build
 	@echo "📦 Instalando $(BINARY_NAME) en $(INSTALL_PATH)..."
 	@sudo mv $(BINARY_NAME) $(INSTALL_PATH)/$(BINARY_NAME)
 	@sudo chmod +x $(INSTALL_PATH)/$(BINARY_NAME)
 	@echo "✅ Instalado! Ahora puedes ejecutar: $(BINARY_NAME)"
 
-# Instalar en ~/go/bin (sin sudo)
 install-user: build
 	@echo "📦 Instalando $(BINARY_NAME) en ~/go/bin..."
 	@mkdir -p ~/go/bin
@@ -28,21 +24,18 @@ install-user: build
 	@echo "💡 Asegúrate de tener ~/go/bin en tu PATH:"
 	@echo "   export PATH=\$$PATH:~/go/bin"
 
-# Desinstalar
 uninstall:
 	@echo "🗑️ Desinstalando $(BINARY_NAME)..."
 	@sudo rm -f $(INSTALL_PATH)/$(BINARY_NAME)
 	@rm -f ~/go/bin/$(BINARY_NAME)
 	@echo "✅ Desinstalado"
 
-# Limpiar binarios locales
 clean:
 	@echo "🧹 Limpiando..."
 	@rm -f $(BINARY_NAME)
 	@rm -f shopify-tui
 	@echo "✅ Limpio"
 
-# Mostrar ayuda
 help:
 	@echo "Comandos disponibles:"
 	@echo "  make build        - Compilar el binario"

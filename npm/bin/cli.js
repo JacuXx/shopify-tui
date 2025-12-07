@@ -5,7 +5,6 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
-// Determinar el binario correcto según el sistema operativo
 function getBinaryPath() {
   const platform = os.platform();
   const arch = os.arch();
@@ -16,7 +15,6 @@ function getBinaryPath() {
     binaryName = 'shopify-cli.exe';
   }
   
-  // El binario está en el directorio bin
   const binaryPath = path.join(__dirname, binaryName);
   
   if (!fs.existsSync(binaryPath)) {
@@ -28,7 +26,6 @@ function getBinaryPath() {
   return binaryPath;
 }
 
-// Ejecutar el binario
 const binaryPath = getBinaryPath();
 const child = spawn(binaryPath, process.argv.slice(2), {
   stdio: 'inherit',
