@@ -29,6 +29,8 @@ shopify-cli
 
 - 🔐 **Login con Shopify** - Autenticación OAuth vía navegador
 - 📦 **Gestión de tiendas** - Guarda múltiples tiendas para acceso rápido
+- 🚀 **Flujo ultra rápido** - Selecciona tienda → servidor inicia automáticamente
+- 📋 **Popup flotante** - Menú flotante con `space` o `m` para acciones rápidas
 - 📥 **Shopify Pull** - Descarga temas directamente desde Shopify
 - 📤 **Theme Push** - Sube cambios al tema
 - 🔗 **Git Clone** - Clona temas desde repositorios Git (SSH o HTTPS)
@@ -36,7 +38,7 @@ shopify-cli
 - 📊 **Logs en Tiempo Real** - Visualiza logs interactivos con scroll
 - 📝 **Abrir Editor** - Abre VS Code en el directorio del tema
 - 💻 **Terminal Integrada** - Abre terminal para comandos adicionales
-- ⌨️ **Navegación tipo Vim** - j/k para navegar, Enter para seleccionar
+- ⌨️ **Navegación tipo Vim** - j/k para navegar, l/Enter para seleccionar
 - 🎨 **Nerd Font Icons** - Iconos bonitos con fallback ASCII automático
 
 ---
@@ -46,10 +48,14 @@ shopify-cli
 ### Menú Principal
 | Tecla | Acción |
 |-------|--------|
+| `a` | Iniciar sesión en Shopify |
+| `t` | Agregar tienda |
+| `d` | Desarrollo local |
+| `v` | Ver servidores activos |
 | `j` / `↓` | Mover abajo |
 | `k` / `↑` | Mover arriba |
-| `Enter` | Seleccionar opción |
-| `q` | Salir |
+| `l` / `Enter` | Seleccionar opción |
+| `Ctrl+Q` | Salir |
 
 ### Formulario (Agregar Tienda)
 | Tecla | Acción |
@@ -57,16 +63,17 @@ shopify-cli
 | `Tab` / `↓` | Siguiente campo |
 | `Shift+Tab` / `↑` | Campo anterior |
 | `Enter` | Continuar/Guardar |
-| `Esc` | Cancelar |
+| `q` / `Esc` | Cancelar |
 
 ### Lista de Tiendas
 | Tecla | Acción |
 |-------|--------|
+| `1-9` | Selección rápida por número |
 | `j` / `↓` | Mover abajo |
 | `k` / `↑` | Mover arriba |
-| `Enter` | Ver opciones de desarrollo |
+| `l` / `Enter` | **Iniciar servidor automáticamente** |
 | `d` | Eliminar tienda |
-| `Esc` | Volver al menú |
+| `q` | Volver al menú |
 
 ### Servidores Activos
 | Tecla | Acción |
@@ -81,6 +88,7 @@ shopify-cli
 ### Vista de Logs (Interactiva)
 | Tecla | Acción |
 |-------|--------|
+| `space` / `m` | **Abrir popup de acciones** |
 | `j` / `↓` | Scroll abajo (1 línea) |
 | `k` / `↑` | Scroll arriba (1 línea) |
 | `g` | Ir al inicio |
@@ -88,9 +96,20 @@ shopify-cli
 | `PgUp` / `Ctrl+U` | Scroll arriba (10 líneas) |
 | `PgDn` / `Ctrl+D` | Scroll abajo (10 líneas) |
 | `v` | **Modo Selección** (copiar texto) |
-| `Ctrl+S` | Detener servidor |
-| `Ctrl+Q` / `Esc` | Volver al menú |
+| `Ctrl+Q` | Volver al menú |
 | `Mouse Wheel` | Scroll con rueda del mouse |
+
+### Popup de Acciones (en Logs)
+| Tecla | Acción |
+|-------|--------|
+| `s` | Detener servidor |
+| `p` | Pull (bajar cambios) |
+| `u` | Push (subir cambios) |
+| `e` | Abrir en VS Code |
+| `t` | Abrir terminal |
+| `j` / `k` | Navegar opciones |
+| `l` / `Enter` | Ejecutar acción |
+| `space` / `Esc` | Cerrar popup |
 
 ### Modo Selección (en Logs)
 | Tecla | Acción |
@@ -199,9 +218,15 @@ go build -o shopify-tui .
 
 ## 📝 Changelog
 
+### v1.3.0
+- 🚀 **Flujo ultra rápido** - Seleccionar tienda inicia servidor automáticamente
+- 📋 **Popup flotante** - Presiona `space` o `m` para menú de acciones rápidas
+- 🔄 Después de Pull/Push/Editor/Terminal regresa a los logs
+- ⌨️ Atajos directos: A/T/D/V en menú, 1-9 para tiendas
+
 ### v1.2.0
 - ✨ Modo selección mejorado - bloquea toda interactividad excepto `v` para salir
-- 🐛 Eliminado Ctrl+C como atajo de cierre (ahora solo `q` en menú principal)
+- 🐛 Eliminado Ctrl+C como atajo de cierre (ahora solo `Ctrl+Q`)
 - 📋 Permite copiar texto con Ctrl+Shift+C en modo selección
 
 ### v1.1.0
