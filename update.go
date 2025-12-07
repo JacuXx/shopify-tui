@@ -1,6 +1,3 @@
-// update.go - Manejo de eventos y lógica
-// Este archivo contiene la función Update() que procesa todas las teclas y mensajes
-
 package main
 
 import (
@@ -10,22 +7,18 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// tickMsg es un mensaje para actualizar la vista de logs periódicamente
 type tickMsg time.Time
 
-// tickCmd retorna un comando que envía un tickMsg cada 500ms
 func tickCmd() tea.Cmd {
 	return tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
 }
 
-// Init se ejecuta una vez al inicio
 func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-// Update procesa todos los eventos
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
@@ -38,14 +31,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+q":
-			// Salir de la aplicación
+
 			ObtenerGestor().DetenerTodos()
 			return m, tea.Quit
 		case "q", "esc":
-			// Volver según la vista actual
+
 			switch m.vista {
 			case VistaMenu:
-				// En el menú principal, no hacer nada con q/esc
+
 				return m, nil
 			case VistaAgregarTienda:
 				m.vista = VistaMenu
@@ -57,7 +50,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case VistaInputGit:
 				m.vista = VistaSeleccionarMetodo
 				m.mensaje = ""
-				// Recrear lista de métodos
+
 				items := crearListaMetodos()
 				m.lista = crearLista(items, Icons.Download+" Método de descarga", m.ancho, m.alto)
 			case VistaSeleccionarTienda:
@@ -70,7 +63,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				items := crearListaTiendas(m.tiendas)
 				m.lista = crearLista(items, Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
 			case VistaLogs:
-				// Volver al menú de modos de esta tienda
+
 				m.vista = VistaSeleccionarModo
 				gestor := ObtenerGestor()
 				tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
@@ -91,16 +84,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case comandoTerminadoMsg:
 		m.mensaje = msg.resultado
-		// Si viene una tienda, agregarla a la lista
+
 		if msg.tienda != nil {
 			m.tiendas = append(m.tiendas, *msg.tienda)
 			guardarTiendas(m.tiendas)
 			m.mensaje = IconSuccess("Tienda '" + msg.tienda.Nombre + "' agregada correctamente")
 		}
-		
-		// Decidir a dónde volver
+
 		if msg.volverAOpciones && m.tiendaParaDev.Nombre != "" {
-			// Volver a opciones de desarrollo de la tienda actual
+
 			m.vista = VistaSeleccionarModo
 			gestor := ObtenerGestor()
 			tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
@@ -111,7 +103,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.lista = crearLista(items, titulo, m.ancho, m.alto)
 		} else {
-			// Volver al menú principal
+
 			m.vista = VistaMenu
 			m.recrearMenuPrincipal()
 		}
@@ -122,14 +114,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tickMsg:
-		// Solo refrescar si estamos en la vista de logs
+
 		if m.vista == VistaLogs {
 			return m, tickCmd()
 		}
 		return m, nil
 	}
 
-	// Delegar a la vista actual
 	switch m.vista {
 	case VistaMenu:
 		return m.updateMenu(msg)
@@ -152,18 +143,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// updateMenu maneja el menú principal
 func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		key := msg.String()
 
-		// Atajos directos del menú principal
 		switch key {
-		case "a": // Iniciar sesión (Auth)
+		case "a":
 			return m, ejecutarShopifyLogin()
 
-		case "t": // Agregar Tienda
+		case "t":
 			m.vista = VistaAgregarTienda
 			m.inputNombre.SetValue("")
 			m.inputURL.SetValue("")
@@ -173,7 +162,7 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.tiendaTemporal = Tienda{}
 			return m, nil
 
-		case "d": // Desarrollo local
+		case "d":
 			if len(m.tiendas) == 0 {
 				m.mensaje = IconWarning("No hay tiendas. Agrega una primero.")
 				return m, nil
@@ -184,7 +173,7 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.mensaje = ""
 			return m, nil
 
-		case "v": // Ver servidores
+		case "v":
 			m.vista = VistaServidores
 			m.mensaje = ""
 			return m, nil
@@ -196,8 +185,7 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			titulo := item.titulo
-			
-			// Usar strings.Contains para que funcione con cualquier set de iconos
+
 			switch {
 			case strings.Contains(titulo, "Iniciar sesión"):
 				return m, ejecutarShopifyLogin()
@@ -236,7 +224,6 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// updateAgregarTienda maneja el formulario de nombre y URL
 func (m Model) updateAgregarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -274,13 +261,11 @@ func (m Model) updateAgregarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
-			// Guardar datos temporales y pasar a seleccionar método
 			m.tiendaTemporal = Tienda{
 				Nombre: nombre,
 				URL:    url,
 			}
 
-			// Ir a seleccionar método
 			m.vista = VistaSeleccionarMetodo
 			items := crearListaMetodos()
 			m.lista = crearLista(items, Icons.Download+" Método de descarga", m.ancho, m.alto)
@@ -298,9 +283,8 @@ func (m Model) updateAgregarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// updateSeleccionarMetodo maneja la selección de método de descarga
 func (m Model) updateSeleccionarMetodo(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// Función helper para Shopify Pull
+
 	usarShopifyPull := func() (tea.Model, tea.Cmd) {
 		directorio, err := crearDirectorioTienda(m.tiendaTemporal.Nombre)
 		if err != nil {
@@ -312,7 +296,6 @@ func (m Model) updateSeleccionarMetodo(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, ejecutarDescargaConExec(m.tiendaTemporal, directorio)
 	}
 
-	// Función helper para Git Clone
 	usarGitClone := func() (tea.Model, tea.Cmd) {
 		directorio, err := crearDirectorioTienda(m.tiendaTemporal.Nombre)
 		if err != nil {
@@ -332,11 +315,10 @@ func (m Model) updateSeleccionarMetodo(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		key := msg.String()
 
-		// Atajos directos
 		switch key {
-		case "s": // Shopify Pull
+		case "s":
 			return usarShopifyPull()
-		case "g": // Git Clone
+		case "g":
 			return usarGitClone()
 
 		case "enter":
@@ -359,7 +341,6 @@ func (m Model) updateSeleccionarMetodo(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// updateInputGit maneja el input de URL de git
 func (m Model) updateInputGit(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -371,7 +352,6 @@ func (m Model) updateInputGit(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
-			// Guardar URL de git y ejecutar clone
 			m.tiendaTemporal.GitURL = gitURL
 			return m, ejecutarDescargaConExec(m.tiendaTemporal, m.tiendaTemporal.Ruta)
 		}
@@ -382,27 +362,23 @@ func (m Model) updateInputGit(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// updateSeleccionarTienda maneja la selección de tienda para theme dev
 func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// Función helper para seleccionar tienda por índice
+
 	seleccionarTienda := func(indice int) (tea.Model, tea.Cmd) {
 		if indice < 0 || indice >= len(m.tiendas) {
 			return m, nil
 		}
 		tienda := m.tiendas[indice]
 
-		// Verificar que el directorio existe
 		if !existeDirectorio(tienda.Ruta) {
 			m.mensaje = IconError("El directorio no existe: " + tienda.Ruta)
 			return m, nil
 		}
 
-		// Guardar tienda seleccionada y pasar al menú de modos
 		m.tiendaParaDev = tienda
 		gestor := ObtenerGestor()
 		tieneServidor := gestor.TieneServidorActivo(tienda.Nombre)
 
-		// Ir a seleccionar modo
 		m.vista = VistaSeleccionarModo
 		items := crearListaModos(tienda, tieneServidor)
 		titulo := Icons.Server + " " + tienda.Nombre
@@ -418,9 +394,8 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		key := msg.String()
 
-		// Atajos numéricos 1-9
 		if len(key) == 1 && key >= "1" && key <= "9" {
-			num := int(key[0] - '1') // Convertir '1' a 0, '2' a 1, etc.
+			num := int(key[0] - '1')
 			return seleccionarTienda(num)
 		}
 
@@ -429,7 +404,7 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return seleccionarTienda(m.lista.Index())
 
 		case "d":
-			// Eliminar tienda
+
 			indice := m.lista.Index()
 			if indice >= 0 && indice < len(m.tiendas) {
 				nombreEliminada := m.tiendas[indice].Nombre
@@ -459,12 +434,10 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// updateSeleccionarModo maneja la selección de modo para el servidor
 func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
 	gestor := ObtenerGestor()
 	tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
 
-	// Funciones helper para las acciones
 	iniciarServidor := func() (tea.Model, tea.Cmd) {
 		servidor, err := gestor.IniciarServidor(m.tiendaParaDev)
 		if err != nil {
@@ -499,30 +472,29 @@ func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		key := msg.String()
 
-		// Atajos directos
 		switch key {
-		case "i": // Iniciar servidor
+		case "i":
 			if !tieneServidor {
 				return iniciarServidor()
 			}
-		case "l": // Ver Logs
+		case "l":
 			if tieneServidor {
 				return verLogs()
 			}
-		case "s": // Stop/Detener
+		case "s":
 			if tieneServidor {
 				return detenerServidor()
 			}
-		case "p": // Pull
+		case "p":
 			return m, ejecutarThemePull(m.tiendaParaDev)
-		case "u": // pUsh
+		case "u":
 			return m, ejecutarThemePush(m.tiendaParaDev)
-		case "e": // Editor
+		case "e":
 			return m, ejecutarAbrirEditor(m.tiendaParaDev)
-		case "t": // Terminal
+		case "t":
 			return m, ejecutarAbrirTerminal(m.tiendaParaDev)
 
-		case "enter": // En esta vista l ya es Ver Logs
+		case "enter":
 			item, ok := m.lista.SelectedItem().(itemMenu)
 			if !ok {
 				return m, nil
@@ -560,13 +532,12 @@ func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// updateServidores maneja la vista de servidores activos
 func (m Model) updateServidores(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "s":
-			// Detener el servidor seleccionado
+
 			servidores := ObtenerGestor().ObtenerServidoresActivos()
 			if len(servidores) == 0 {
 				return m, nil
@@ -586,22 +557,22 @@ func (m Model) updateServidores(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "S":
-			// Detener todos los servidores
+
 			ObtenerGestor().DetenerTodos()
 			m.mensaje = "✅ Todos los servidores detenidos"
 			return m, nil
 
 		case "j", "down":
-			// Navegar abajo en la lista de servidores
+
 			servidores := ObtenerGestor().ObtenerServidoresActivos()
 			if len(servidores) > 0 {
-				// Usar la lista para manejar la navegación
+
 				m.lista, _ = m.lista.Update(msg)
 			}
 			return m, nil
 
 		case "k", "up":
-			// Navegar arriba
+
 			servidores := ObtenerGestor().ObtenerServidoresActivos()
 			if len(servidores) > 0 {
 				m.lista, _ = m.lista.Update(msg)
@@ -613,30 +584,28 @@ func (m Model) updateServidores(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// updateLogs maneja la vista de logs en tiempo real
 func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 	servidor := ObtenerGestor().ObtenerServidor(m.tiendaParaDev.Nombre)
-	
-	// Helper para calcular maxScroll
+
 	getMaxScroll := func() int {
 		if servidor == nil {
 			return 0
 		}
 		logs := servidor.ObtenerLogs()
-		maxScroll := len(logs) - (m.alto - 8) // Altura disponible para logs
+		maxScroll := len(logs) - (m.alto - 8)
 		if maxScroll < 0 {
 			maxScroll = 0
 		}
 		return maxScroll
 	}
-	
+
 	switch msg := msg.(type) {
 	case tea.MouseMsg:
-		// En modo selección, ignorar eventos de mouse para permitir selección nativa
+
 		if m.modoSeleccion {
 			return m, nil
 		}
-		// Soporte para scroll con mouse
+
 		switch msg.Type {
 		case tea.MouseWheelUp:
 			m.logsScroll -= 3
@@ -652,33 +621,31 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 		}
-		
+
 	case tea.KeyMsg:
 		key := msg.String()
-		
-		// EN MODO SELECCIÓN: Solo responder a 'v' para salir, ignorar todo lo demás
+
 		if m.modoSeleccion {
 			if key == "v" {
 				m.modoSeleccion = false
 				m.mensaje = ""
 				return m, tea.EnableMouseCellMotion
 			}
-			// Ignorar todas las demás teclas en modo selección
+
 			return m, nil
 		}
-		
-		// Teclas de control del TUI (solo cuando NO está en modo selección)
+
 		switch key {
 		case "v":
-			// Toggle modo selección (permite copiar con mouse) - "v" como visual mode en vim
+
 			m.modoSeleccion = true
 			m.mensaje = IconInfo("Modo selección ON - Usa Ctrl+Shift+C para copiar, 'v' para salir")
-			// Desactivar captura de mouse para permitir selección nativa
+
 			return m, tea.DisableMouse
-			
+
 		case "ctrl+q":
-			// Volver al menú de modos (el servidor sigue corriendo)
-			m.modoSeleccion = false // Resetear modo selección
+
+			m.modoSeleccion = false
 			m.vista = VistaSeleccionarModo
 			gestor := ObtenerGestor()
 			tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
@@ -689,11 +656,11 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.lista = crearLista(items, titulo, m.ancho, m.alto)
 			m.mensaje = ""
-			// Reactivar mouse al salir
+
 			return m, tea.EnableMouseCellMotion
 
 		case "ctrl+s":
-			// Detener servidor desde la vista de logs
+
 			if err := ObtenerGestor().DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
 				m.mensaje = IconError(err.Error())
 			} else {
@@ -702,17 +669,17 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tickCmd()
 
 		case "ctrl+g", "G":
-			// Ir al final de los logs (G como en vim)
+
 			m.logsScroll = getMaxScroll()
 			return m, nil
 
 		case "ctrl+t", "g":
-			// Ir al inicio de los logs (g como en vim)
+
 			m.logsScroll = 0
 			return m, nil
 
 		case "j", "down":
-			// Scroll hacia abajo (una línea)
+
 			maxScroll := getMaxScroll()
 			m.logsScroll++
 			if m.logsScroll > maxScroll {
@@ -721,7 +688,7 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "k", "up":
-			// Scroll hacia arriba (una línea)
+
 			m.logsScroll--
 			if m.logsScroll < 0 {
 				m.logsScroll = 0
@@ -729,7 +696,7 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "pgdown", "ctrl+d":
-			// Scroll rápido hacia abajo (media página)
+
 			maxScroll := getMaxScroll()
 			m.logsScroll += 10
 			if m.logsScroll > maxScroll {
@@ -738,7 +705,7 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "pgup", "ctrl+u":
-			// Scroll rápido hacia arriba (media página)
+
 			m.logsScroll -= 10
 			if m.logsScroll < 0 {
 				m.logsScroll = 0
@@ -746,9 +713,9 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		default:
-			// Todas las demás teclas se envían al proceso de Shopify
+
 			if servidor != nil && servidor.Activo {
-				// Convertir tecla a lo que espera el proceso
+
 				var input string
 				switch key {
 				case "enter":
@@ -760,12 +727,12 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case "backspace":
 					input = "\b"
 				default:
-					// Si es una tecla simple (letra, número, etc.)
+
 					if len(key) == 1 {
 						input = key
 					}
 				}
-				
+
 				if input != "" {
 					if err := servidor.EnviarInput(input); err != nil {
 						m.mensaje = IconWarning("Error enviando input")
