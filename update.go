@@ -189,7 +189,7 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.mensaje = ""
 			return m, nil
 
-		case "enter":
+		case "enter", "l":
 			item, ok := m.lista.SelectedItem().(itemMenu)
 			if !ok {
 				return m, nil
@@ -364,7 +364,7 @@ func (m Model) updateInputGit(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "enter":
+		case "enter", "l":
 			gitURL := m.inputGit.Value()
 			if gitURL == "" {
 				m.mensaje = IconWarning("Por favor ingresa la URL del repositorio")
@@ -425,7 +425,7 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		switch key {
-		case "enter":
+		case "enter", "l":
 			return seleccionarTienda(m.lista.Index())
 
 		case "d":
@@ -522,7 +522,7 @@ func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "t": // Terminal
 			return m, ejecutarAbrirTerminal(m.tiendaParaDev)
 
-		case "enter":
+		case "enter": // En esta vista l ya es Ver Logs
 			item, ok := m.lista.SelectedItem().(itemMenu)
 			if !ok {
 				return m, nil

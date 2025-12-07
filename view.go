@@ -194,7 +194,7 @@ func (m Model) vistaMenu() string {
 	s += "\n" + estiloAyuda.Render(
 		fmt.Sprintf("Tiendas: %d | Servidores: %d", len(m.tiendas), servidoresActivos),
 	)
-	s += "\n" + estiloAyuda.Render("[A/T/D/V] o j/k + enter | Ctrl+Q: salir")
+	s += "\n" + estiloAyuda.Render("[A/T/D/V] j/k l/enter: seleccionar | Ctrl+Q: salir")
 
 	return s
 }
@@ -275,7 +275,7 @@ func (m Model) vistaSeleccionarMetodo() string {
 		b.WriteString("\n")
 	}
 
-	b.WriteString(estiloAyuda.Render("[S]hopify Pull | [G]it Clone | q: volver"))
+	b.WriteString(estiloAyuda.Render("[S]hopify Pull | [G]it Clone | l/enter | q: volver"))
 
 	return b.String()
 }
@@ -349,7 +349,7 @@ func (m Model) vistaSeleccionarTienda() string {
 		s += "\n"
 	}
 
-	s += estiloAyuda.Render("[1-9]: selección rápida | d: eliminar | q: volver")
+	s += estiloAyuda.Render("[1-9] l/enter | d: eliminar | q: volver")
 
 	return s
 }
