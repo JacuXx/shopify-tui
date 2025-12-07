@@ -153,7 +153,39 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
+		key := msg.String()
+
+		// Atajos directos del menú principal
+		switch key {
+		case "a": // Iniciar sesión (Auth)
+			return m, ejecutarShopifyLogin()
+
+		case "t": // Agregar Tienda
+			m.vista = VistaAgregarTienda
+			m.inputNombre.SetValue("")
+			m.inputURL.SetValue("")
+			m.inputNombre.Focus()
+			m.cursorInput = 0
+			m.mensaje = ""
+			m.tiendaTemporal = Tienda{}
+			return m, nil
+
+		case "d": // Desarrollo local
+			if len(m.tiendas) == 0 {
+				m.mensaje = IconWarning("No hay tiendas. Agrega una primero.")
+				return m, nil
+			}
+			m.vista = VistaSeleccionarTienda
+			items := crearListaTiendas(m.tiendas)
+			m.lista = crearLista(items, Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
+			m.mensaje = ""
+			return m, nil
+
+		case "v": // Ver servidores
+			m.vista = VistaServidores
+			m.mensaje = ""
+			return m, nil
+
 		case "enter":
 			item, ok := m.lista.SelectedItem().(itemMenu)
 			if !ok {
@@ -270,38 +302,56 @@ func (m Model) updateAgregarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // updateSeleccionarMetodo maneja la selección de método de descarga
 func (m Model) updateSeleccionarMetodo(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// Función helper para Shopify Pull
+	usarShopifyPull := func() (tea.Model, tea.Cmd) {
+		directorio, err := crearDirectorioTienda(m.tiendaTemporal.Nombre)
+		if err != nil {
+			m.mensaje = IconError("Error al crear directorio: " + err.Error())
+			return m, nil
+		}
+		m.tiendaTemporal.Metodo = MetodoShopifyPull
+		m.tiendaTemporal.Ruta = directorio
+		return m, ejecutarDescargaConExec(m.tiendaTemporal, directorio)
+	}
+
+	// Función helper para Git Clone
+	usarGitClone := func() (tea.Model, tea.Cmd) {
+		directorio, err := crearDirectorioTienda(m.tiendaTemporal.Nombre)
+		if err != nil {
+			m.mensaje = IconError("Error al crear directorio: " + err.Error())
+			return m, nil
+		}
+		m.tiendaTemporal.Metodo = MetodoGitClone
+		m.tiendaTemporal.Ruta = directorio
+		m.vista = VistaInputGit
+		m.inputGit.SetValue("")
+		m.inputGit.Focus()
+		m.mensaje = ""
+		return m, nil
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
+		key := msg.String()
+
+		// Atajos directos
+		switch key {
+		case "s": // Shopify Pull
+			return usarShopifyPull()
+		case "g": // Git Clone
+			return usarGitClone()
+
 		case "enter":
 			item, ok := m.lista.SelectedItem().(itemMenu)
 			if !ok {
 				return m, nil
 			}
 
-			// Crear el directorio para la tienda
-			directorio, err := crearDirectorioTienda(m.tiendaTemporal.Nombre)
-			if err != nil {
-				m.mensaje = IconError("Error al crear directorio: " + err.Error())
-				return m, nil
-			}
-
 			titulo := item.titulo
 			if strings.Contains(titulo, "Shopify Pull") {
-				// Método: Shopify Pull
-				m.tiendaTemporal.Metodo = MetodoShopifyPull
-				m.tiendaTemporal.Ruta = directorio
-				return m, ejecutarDescargaConExec(m.tiendaTemporal, directorio)
-
+				return usarShopifyPull()
 			} else if strings.Contains(titulo, "Git Clone") {
-				// Método: Git - ir a pedir URL
-				m.tiendaTemporal.Metodo = MetodoGitClone
-				m.tiendaTemporal.Ruta = directorio
-				m.vista = VistaInputGit
-				m.inputGit.SetValue("")
-				m.inputGit.Focus()
-				m.mensaje = ""
-				return m, nil
+				return usarGitClone()
 			}
 		}
 	}
@@ -336,36 +386,49 @@ func (m Model) updateInputGit(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // updateSeleccionarTienda maneja la selección de tienda para theme dev
 func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// Función helper para seleccionar tienda por índice
+	seleccionarTienda := func(indice int) (tea.Model, tea.Cmd) {
+		if indice < 0 || indice >= len(m.tiendas) {
+			return m, nil
+		}
+		tienda := m.tiendas[indice]
+
+		// Verificar que el directorio existe
+		if !existeDirectorio(tienda.Ruta) {
+			m.mensaje = IconError("El directorio no existe: " + tienda.Ruta)
+			return m, nil
+		}
+
+		// Guardar tienda seleccionada y pasar al menú de modos
+		m.tiendaParaDev = tienda
+		gestor := ObtenerGestor()
+		tieneServidor := gestor.TieneServidorActivo(tienda.Nombre)
+
+		// Ir a seleccionar modo
+		m.vista = VistaSeleccionarModo
+		items := crearListaModos(tienda, tieneServidor)
+		titulo := Icons.Server + " " + tienda.Nombre
+		if tieneServidor {
+			titulo = Icons.ServerOn + " " + tienda.Nombre + " (servidor activo)"
+		}
+		m.lista = crearLista(items, titulo, m.ancho, m.alto)
+		m.mensaje = ""
+		return m, nil
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
+		key := msg.String()
+
+		// Atajos numéricos 1-9
+		if len(key) == 1 && key >= "1" && key <= "9" {
+			num := int(key[0] - '1') // Convertir '1' a 0, '2' a 1, etc.
+			return seleccionarTienda(num)
+		}
+
+		switch key {
 		case "enter":
-			item, ok := m.lista.SelectedItem().(itemTienda)
-			if !ok {
-				return m, nil
-			}
-
-			// Verificar que el directorio existe
-			if !existeDirectorio(item.tienda.Ruta) {
-				m.mensaje = IconError("El directorio no existe: " + item.tienda.Ruta)
-				return m, nil
-			}
-
-			// Guardar tienda seleccionada y pasar al menú de modos
-			m.tiendaParaDev = item.tienda
-			gestor := ObtenerGestor()
-			tieneServidor := gestor.TieneServidorActivo(item.tienda.Nombre)
-
-			// Ir a seleccionar modo
-			m.vista = VistaSeleccionarModo
-			items := crearListaModos(item.tienda, tieneServidor)
-			titulo := Icons.Server + " " + item.tienda.Nombre
-			if tieneServidor {
-				titulo = Icons.ServerOn + " " + item.tienda.Nombre + " (servidor activo)"
-			}
-			m.lista = crearLista(items, titulo, m.ancho, m.alto)
-			m.mensaje = ""
-			return m, nil
+			return seleccionarTienda(m.lista.Index())
 
 		case "d":
 			// Eliminar tienda
@@ -400,63 +463,95 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // updateSeleccionarModo maneja la selección de modo para el servidor
 func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
+	gestor := ObtenerGestor()
+	tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
+
+	// Funciones helper para las acciones
+	iniciarServidor := func() (tea.Model, tea.Cmd) {
+		servidor, err := gestor.IniciarServidor(m.tiendaParaDev)
+		if err != nil {
+			m.mensaje = IconError(err.Error())
+			return m, nil
+		}
+		m.mensaje = IconSuccess("Servidor iniciado en " + servidor.URL)
+		m.vista = VistaLogs
+		m.logsScroll = 0
+		return m, tickCmd()
+	}
+
+	verLogs := func() (tea.Model, tea.Cmd) {
+		m.vista = VistaLogs
+		m.logsScroll = 0
+		m.mensaje = ""
+		return m, tickCmd()
+	}
+
+	detenerServidor := func() (tea.Model, tea.Cmd) {
+		if err := gestor.DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
+			m.mensaje = IconError(err.Error())
+		} else {
+			m.mensaje = Icons.Stop + " Servidor detenido"
+		}
+		m.vista = VistaMenu
+		m.recrearMenuPrincipal()
+		return m, nil
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
+		key := msg.String()
+
+		// Atajos directos
+		switch key {
+		case "i": // Iniciar servidor
+			if !tieneServidor {
+				return iniciarServidor()
+			}
+		case "l": // Ver Logs
+			if tieneServidor {
+				return verLogs()
+			}
+		case "s": // Stop/Detener
+			if tieneServidor {
+				return detenerServidor()
+			}
+		case "p": // Pull
+			return m, ejecutarThemePull(m.tiendaParaDev)
+		case "u": // pUsh
+			return m, ejecutarThemePush(m.tiendaParaDev)
+		case "e": // Editor
+			return m, ejecutarAbrirEditor(m.tiendaParaDev)
+		case "t": // Terminal
+			return m, ejecutarAbrirTerminal(m.tiendaParaDev)
+
 		case "enter":
 			item, ok := m.lista.SelectedItem().(itemMenu)
 			if !ok {
 				return m, nil
 			}
 
-			gestor := ObtenerGestor()
 			titulo := item.titulo
 
 			switch {
 			case strings.Contains(titulo, "Iniciar"):
-				// Iniciar servidor y mostrar logs
-				servidor, err := gestor.IniciarServidor(m.tiendaParaDev)
-				if err != nil {
-					m.mensaje = IconError(err.Error())
-					return m, nil
-				}
-				m.mensaje = IconSuccess("Servidor iniciado en " + servidor.URL)
-				m.vista = VistaLogs
-				m.logsScroll = 0
-				return m, tickCmd()
+				return iniciarServidor()
 
 			case strings.Contains(titulo, "Ver logs"):
-				// Ir a ver los logs del servidor activo
-				m.vista = VistaLogs
-				m.logsScroll = 0
-				m.mensaje = ""
-				return m, tickCmd()
+				return verLogs()
 
 			case strings.Contains(titulo, "Detener"):
-				// Detener el servidor de esta tienda
-				if err := gestor.DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
-					m.mensaje = IconError(err.Error())
-				} else {
-					m.mensaje = Icons.Stop + " Servidor de '" + m.tiendaParaDev.Nombre + "' detenido"
-				}
-				m.vista = VistaMenu
-				m.recrearMenuPrincipal()
-				return m, nil
+				return detenerServidor()
 
 			case strings.Contains(titulo, "Pull"):
-				// Ejecutar theme pull
 				return m, ejecutarThemePull(m.tiendaParaDev)
 
 			case strings.Contains(titulo, "Push"):
-				// Ejecutar theme push
 				return m, ejecutarThemePush(m.tiendaParaDev)
 
 			case strings.Contains(titulo, "Editor"):
-				// Abrir VS Code (o el editor configurado)
 				return m, ejecutarAbrirEditor(m.tiendaParaDev)
 
 			case strings.Contains(titulo, "Terminal"):
-				// Abrir terminal en el directorio del tema
 				return m, ejecutarAbrirTerminal(m.tiendaParaDev)
 			}
 		}

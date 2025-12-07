@@ -78,6 +78,7 @@ type Model struct {
 type itemMenu struct {
 	titulo string // Texto principal
 	desc   string // Descripción debajo del título
+	atajo  string // Tecla de atajo (a, s, d, etc.)
 }
 
 // Estos métodos son requeridos por la interface list.Item
@@ -88,6 +89,7 @@ func (i itemMenu) FilterValue() string { return i.titulo }
 // itemTienda representa una tienda en la lista de selección
 type itemTienda struct {
 	tienda Tienda
+	indice int // Número para selección rápida (1, 2, 3...)
 }
 
 func (i itemTienda) Title() string {
@@ -162,22 +164,27 @@ func crearMenuPrincipal() []list.Item {
 		itemMenu{
 			titulo: Icons.Login + " Iniciar sesión",
 			desc:   "Autenticarte en Shopify",
+			atajo:  "a",
 		},
 		itemMenu{
 			titulo: Icons.Add + " Agregar tienda",
 			desc:   "Registrar tienda y descargar tema",
+			atajo:  "t",
 		},
 		itemMenu{
 			titulo: Icons.Server + " Desarrollo local",
 			desc:   "Iniciar servidor",
+			atajo:  "d",
 		},
 		itemMenu{
 			titulo: Icons.Logs + " Servidores activos",
 			desc:   "Ver y administrar procesos",
+			atajo:  "v",
 		},
 		itemMenu{
 			titulo: Icons.Exit + " Salir",
 			desc:   "Cerrar la aplicación",
+			atajo:  "q",
 		},
 	}
 }
@@ -186,7 +193,7 @@ func crearMenuPrincipal() []list.Item {
 func crearListaTiendas(tiendas []Tienda) []list.Item {
 	items := make([]list.Item, len(tiendas))
 	for i, t := range tiendas {
-		items[i] = itemTienda{tienda: t}
+		items[i] = itemTienda{tienda: t, indice: i + 1}
 	}
 	return items
 }
@@ -197,10 +204,12 @@ func crearListaMetodos() []list.Item {
 		itemMenu{
 			titulo: Icons.Download + " Shopify Pull",
 			desc:   "Desde Shopify directo",
+			atajo:  "s",
 		},
 		itemMenu{
 			titulo: Icons.Git + " Git Clone",
 			desc:   "Desde repositorio Git",
+			atajo:  "g",
 		},
 	}
 }
@@ -212,18 +221,22 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 		itemMenu{
 			titulo: Icons.Download + " Pull",
 			desc:   "Bajar cambios del tema",
+			atajo:  "p",
 		},
 		itemMenu{
 			titulo: Icons.Upload + " Push",
 			desc:   "Subir cambios al tema",
+			atajo:  "u",
 		},
 		itemMenu{
 			titulo: Icons.Editor + " Editor",
 			desc:   "Abrir en VS Code",
+			atajo:  "e",
 		},
 		itemMenu{
 			titulo: Icons.Terminal + " Terminal",
 			desc:   "Abrir terminal aquí",
+			atajo:  "t",
 		},
 	}
 
@@ -233,10 +246,12 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 			itemMenu{
 				titulo: Icons.Logs + " Ver logs",
 				desc:   "Logs en tiempo real",
+				atajo:  "l",
 			},
 			itemMenu{
 				titulo: Icons.Stop + " Detener",
 				desc:   "Parar servidor",
+				atajo:  "s",
 			},
 		}
 		return append(items, opcionesComunes...)
@@ -246,6 +261,7 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 		itemMenu{
 			titulo: Icons.Rocket + " Iniciar",
 			desc:   "Ejecutar theme dev",
+			atajo:  "i",
 		},
 	}
 	return append(items, opcionesComunes...)

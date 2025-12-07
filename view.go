@@ -46,7 +46,103 @@ var (
 	estiloInfo = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#7D56F4")).
 			Italic(true)
+
+	estiloAtajo = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FFB800")).
+			Bold(true)
+
+	estiloItemNormal = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FFFFFF"))
+
+	estiloItemSeleccionado = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#7D56F4")).
+			Bold(true)
+
+	estiloDesc = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#626262"))
 )
+
+// renderMenuConAtajos renderiza un menú con atajos de teclado visibles
+func renderMenuConAtajos(items []itemMenu, selectedIndex int, titulo string) string {
+	var b strings.Builder
+
+	// Título
+	b.WriteString(estiloTitulo.Render(titulo))
+	b.WriteString("\n\n")
+
+	for i, item := range items {
+		// Atajo en amarillo
+		atajo := estiloAtajo.Render("[" + strings.ToUpper(item.atajo) + "]")
+
+		// Título del item
+		var itemTitulo string
+		if i == selectedIndex {
+			itemTitulo = estiloItemSeleccionado.Render(item.titulo)
+		} else {
+			itemTitulo = estiloItemNormal.Render(item.titulo)
+		}
+
+		// Descripción
+		desc := estiloDesc.Render(item.desc)
+
+		// Cursor
+		cursor := "  "
+		if i == selectedIndex {
+			cursor = "> "
+		}
+
+		b.WriteString(fmt.Sprintf("%s%s %s\n", cursor, atajo, itemTitulo))
+		b.WriteString(fmt.Sprintf("      %s\n", desc))
+	}
+
+	return b.String()
+}
+
+// renderListaTiendas renderiza la lista de tiendas con números
+func renderListaTiendas(tiendas []Tienda, selectedIndex int, titulo string) string {
+	var b strings.Builder
+
+	b.WriteString(estiloTitulo.Render(titulo))
+	b.WriteString("\n\n")
+
+	for i, tienda := range tiendas {
+		// Número en amarillo
+		num := estiloAtajo.Render(fmt.Sprintf("[%d]", i+1))
+
+		// Nombre de la tienda
+		var nombre string
+		tieneServidor := ObtenerGestor().TieneServidorActivo(tienda.Nombre)
+		if tieneServidor {
+			nombre = Icons.ServerOn + " " + tienda.Nombre
+		} else {
+			nombre = tienda.Nombre
+		}
+
+		if i == selectedIndex {
+			nombre = estiloItemSeleccionado.Render(nombre)
+		} else {
+			nombre = estiloItemNormal.Render(nombre)
+		}
+
+		// Descripción
+		metodo := Icons.Download + " pull"
+		if tienda.Metodo == MetodoGitClone {
+			metodo = Icons.Git + " git"
+		}
+		desc := estiloDesc.Render(tienda.URL + " [" + metodo + "]")
+
+		// Cursor
+		cursor := "  "
+		if i == selectedIndex {
+			cursor = "> "
+		}
+
+		b.WriteString(fmt.Sprintf("%s%s %s\n", cursor, num, nombre))
+		b.WriteString(fmt.Sprintf("      %s\n", desc))
+	}
+
+	return b.String()
+}
 
 // View es la función principal de renderizado
 func (m Model) View() string {
@@ -74,11 +170,19 @@ func (m Model) View() string {
 
 // vistaMenu renderiza el menú principal
 func (m Model) vistaMenu() string {
-	s := m.lista.View()
+	// Convertir items de la lista a itemMenu
+	items := []itemMenu{}
+	for _, item := range m.lista.Items() {
+		if menuItem, ok := item.(itemMenu); ok {
+			items = append(items, menuItem)
+		}
+	}
+
+	s := renderMenuConAtajos(items, m.lista.Index(), Icons.App+" Shopify TUI")
 
 	if m.mensaje != "" {
 		s += "\n"
-		if strings.HasPrefix(m.mensaje, "✅") {
+		if strings.HasPrefix(m.mensaje, "✅") || strings.HasPrefix(m.mensaje, Icons.Success) {
 			s += estiloExito.Render(m.mensaje)
 		} else {
 			s += estiloError.Render(m.mensaje)
@@ -88,9 +192,9 @@ func (m Model) vistaMenu() string {
 	// Mostrar info de tiendas y servidores
 	servidoresActivos := ObtenerGestor().ContarActivos()
 	s += "\n" + estiloAyuda.Render(
-		fmt.Sprintf("📦 Tiendas: %d | 🟢 Servidores activos: %d", len(m.tiendas), servidoresActivos),
+		fmt.Sprintf("Tiendas: %d | Servidores: %d", len(m.tiendas), servidoresActivos),
 	)
-	s += "\n" + estiloAyuda.Render("j/k: navegar • enter: seleccionar • q: salir")
+	s += "\n" + estiloAyuda.Render("Usa las teclas [A/T/D/V/Q] o j/k + enter")
 
 	return s
 }
@@ -140,15 +244,11 @@ func (m Model) vistaAgregarTienda() string {
 	return estiloContenedor.Render(b.String())
 }
 
-// vistaSeleccionarMetodo renderiza la selección de método de descarga
+// vistaSeleccionarMetodo renderiza la lista de métodos de descarga
 func (m Model) vistaSeleccionarMetodo() string {
 	var b strings.Builder
 
-	b.WriteString(estiloTitulo.Render("➕ Agregar Nueva Tienda"))
-	b.WriteString("\n\n")
-
-	// Paso actual
-	b.WriteString(estiloInfo.Render("Paso 2 de 2: ¿Cómo obtener los archivos del tema?"))
+	b.WriteString(estiloTitulo.Render(Icons.Download + " Método de descarga"))
 	b.WriteString("\n\n")
 
 	// Mostrar info de la tienda
@@ -159,8 +259,15 @@ func (m Model) vistaSeleccionarMetodo() string {
 	b.WriteString(m.tiendaTemporal.URL)
 	b.WriteString("\n\n")
 
-	// Lista de métodos
-	b.WriteString(m.lista.View())
+	// Convertir items de la lista a itemMenu
+	items := []itemMenu{}
+	for _, item := range m.lista.Items() {
+		if menuItem, ok := item.(itemMenu); ok {
+			items = append(items, menuItem)
+		}
+	}
+
+	b.WriteString(renderMenuConAtajos(items, m.lista.Index(), "Elige método"))
 	b.WriteString("\n")
 
 	if m.mensaje != "" {
@@ -168,7 +275,7 @@ func (m Model) vistaSeleccionarMetodo() string {
 		b.WriteString("\n")
 	}
 
-	b.WriteString(estiloAyuda.Render("enter: seleccionar • esc: volver"))
+	b.WriteString(estiloAyuda.Render("[S]hopify Pull | [G]it Clone | esc: volver"))
 
 	return b.String()
 }
@@ -224,27 +331,27 @@ func (m Model) vistaSeleccionarTienda() string {
 		return estiloContenedor.Render(b.String())
 	}
 
-	b.WriteString(m.lista.View())
-	b.WriteString("\n")
+	s := renderListaTiendas(m.tiendas, m.lista.Index(), Icons.Server+" Selecciona tienda")
 
 	// Mostrar la ruta de la tienda seleccionada
-	if item, ok := m.lista.SelectedItem().(itemTienda); ok {
-		b.WriteString(estiloInfo.Render("📁 " + item.tienda.Ruta))
-		b.WriteString("\n")
+	idx := m.lista.Index()
+	if idx >= 0 && idx < len(m.tiendas) {
+		s += estiloInfo.Render("📁 " + m.tiendas[idx].Ruta)
+		s += "\n"
 	}
 
 	if m.mensaje != "" {
-		if strings.HasPrefix(m.mensaje, "✅") {
-			b.WriteString(estiloExito.Render(m.mensaje))
+		if strings.HasPrefix(m.mensaje, "✅") || strings.HasPrefix(m.mensaje, Icons.Success) {
+			s += estiloExito.Render(m.mensaje)
 		} else {
-			b.WriteString(estiloError.Render(m.mensaje))
+			s += estiloError.Render(m.mensaje)
 		}
-		b.WriteString("\n")
+		s += "\n"
 	}
 
-	b.WriteString(estiloAyuda.Render("enter: seleccionar • d: eliminar • esc: volver"))
+	s += estiloAyuda.Render("[1-9]: selección rápida | d: eliminar | esc: volver")
 
-	return b.String()
+	return s
 }
 
 // vistaSeleccionarModo renderiza el menú para elegir modo de servidor
@@ -256,28 +363,36 @@ func (m Model) vistaSeleccionarModo() string {
 	tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
 
 	if tieneServidor {
-		b.WriteString(estiloExito.Render("🟢 Servidor activo"))
+		b.WriteString(estiloExito.Render("● Servidor activo"))
 		b.WriteString("\n")
 		// Mostrar URL del servidor
 		for _, s := range gestor.ObtenerServidoresActivos() {
 			if s.Tienda.Nombre == m.tiendaParaDev.Nombre {
-				b.WriteString(estiloInfo.Render("   " + s.URL))
+				b.WriteString(estiloInfo.Render("  " + s.URL))
 				b.WriteString("\n")
 				break
 			}
 		}
+		b.WriteString("\n")
 	}
 
-	b.WriteString("\n")
-	b.WriteString(m.lista.View())
-	b.WriteString("\n")
+	// Convertir items de la lista a itemMenu
+	items := []itemMenu{}
+	for _, item := range m.lista.Items() {
+		if menuItem, ok := item.(itemMenu); ok {
+			items = append(items, menuItem)
+		}
+	}
+
+	titulo := m.tiendaParaDev.Nombre
+	b.WriteString(renderMenuConAtajos(items, m.lista.Index(), titulo))
 
 	// Mostrar ruta
 	b.WriteString(estiloInfo.Render("📁 " + m.tiendaParaDev.Ruta))
 	b.WriteString("\n")
 
 	if m.mensaje != "" {
-		if strings.HasPrefix(m.mensaje, "✅") {
+		if strings.HasPrefix(m.mensaje, "✅") || strings.HasPrefix(m.mensaje, Icons.Success) {
 			b.WriteString(estiloExito.Render(m.mensaje))
 		} else {
 			b.WriteString(estiloError.Render(m.mensaje))
@@ -285,7 +400,12 @@ func (m Model) vistaSeleccionarModo() string {
 		b.WriteString("\n")
 	}
 
-	b.WriteString(estiloAyuda.Render("enter: seleccionar • esc: volver"))
+	// Mostrar atajos disponibles
+	if tieneServidor {
+		b.WriteString(estiloAyuda.Render("[L]ogs [S]top [P]ull p[U]sh [E]ditor [T]erminal | esc: volver"))
+	} else {
+		b.WriteString(estiloAyuda.Render("[I]niciar [P]ull p[U]sh [E]ditor [T]erminal | esc: volver"))
+	}
 
 	return b.String()
 }
