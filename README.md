@@ -1,7 +1,7 @@
 # 🛒 Shopify CLI TUI
 
 <p align="center">
-  <img src="https://img.shields.io/npm/v/shopify-cli-tui?style=flat-square&color=blue" alt="npm version">
+  <img src="https://img.shields.io/npm/v/shopify-cli-tui?style=flat-square&color=blue&cacheSeconds=60" alt="npm version">
   <img src="https://img.shields.io/npm/dm/shopify-cli-tui?style=flat-square&color=green" alt="npm downloads">
   <img src="https://img.shields.io/github/license/JacuXx/shopify-tui?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey?style=flat-square" alt="platform">
