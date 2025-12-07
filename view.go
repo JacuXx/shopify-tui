@@ -167,6 +167,14 @@ func (m Model) vistaMenu() string {
 
 	s := renderMenuConAtajos(items, m.lista.Index(), Icons.App+" Shopify TUI")
 
+	if m.hayActualizacion {
+		estiloAviso := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD700")).Bold(true)
+		estiloVersion := lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFFF"))
+		estiloComando := lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF00"))
+		s += "\n\n" + estiloAviso.Render("⚡ Nueva versión disponible: ") + estiloVersion.Render(m.versionNueva) + estiloAviso.Render(" (actual: "+Version+")")
+		s += "\n" + estiloAviso.Render("📦 Actualiza: ") + estiloComando.Render("npm update -g shopify-cli-tui")
+	}
+
 	if m.mensaje != "" {
 		s += "\n"
 		if strings.HasPrefix(m.mensaje, "✅") || strings.HasPrefix(m.mensaje, Icons.Success) {
@@ -211,9 +219,7 @@ func (m Model) vistaAgregarTienda() string {
 		b.WriteString(estiloLabel.Render("  URL de Shopify:"))
 	}
 	b.WriteString("\n")
-	b.WriteString("  " + m.inputURL.View())
-	b.WriteString("\n")
-	b.WriteString(estiloAyuda.Render("    Ejemplo: mi-tienda.myshopify.com"))
+	b.WriteString("  " + m.inputURL.View() + lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFFF")).Render(".myshopify.com"))
 	b.WriteString("\n\n")
 
 	if m.mensaje != "" {

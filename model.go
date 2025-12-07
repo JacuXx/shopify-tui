@@ -57,6 +57,9 @@ type Model struct {
 	modoSeleccion bool
 	popupIndex    int
 	vistaAnterior Vista
+
+	hayActualizacion bool
+	versionNueva     string
 }
 
 type itemMenu struct {
@@ -107,9 +110,9 @@ func modeloInicial() Model {
 	inputNombre.Width = 40
 
 	inputURL := textinput.New()
-	inputURL.Placeholder = "mi-tienda.myshopify.com"
-	inputURL.CharLimit = 100
-	inputURL.Width = 40
+	inputURL.Placeholder = "mi-tienda"
+	inputURL.CharLimit = 50
+	inputURL.Width = 30
 
 	inputGit := textinput.New()
 	inputGit.Placeholder = "git@github.com:usuario/tema.git o https://..."
@@ -122,14 +125,18 @@ func modeloInicial() Model {
 
 	tiendas, _ := cargarTiendas()
 
+	hayUpdate, versionNew := verificarActualizacion()
+
 	return Model{
-		vista:       VistaMenu,
-		lista:       lista,
-		inputNombre: inputNombre,
-		inputURL:    inputURL,
-		inputGit:    inputGit,
-		tiendas:     tiendas,
-		cursorInput: 0,
+		vista:            VistaMenu,
+		lista:            lista,
+		inputNombre:      inputNombre,
+		inputURL:         inputURL,
+		inputGit:         inputGit,
+		tiendas:          tiendas,
+		cursorInput:      0,
+		hayActualizacion: hayUpdate,
+		versionNueva:     versionNew,
 	}
 }
 

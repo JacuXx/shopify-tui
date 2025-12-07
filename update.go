@@ -260,7 +260,7 @@ func (m Model) updateAgregarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.tiendaTemporal = Tienda{
 				Nombre: nombre,
-				URL:    url,
+				URL:    url + ".myshopify.com",
 			}
 
 			m.vista = VistaSeleccionarMetodo
