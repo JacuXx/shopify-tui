@@ -1,25 +1,11 @@
 package main
 
 import (
-	"os"
 	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
-
-func debugLog(msg string) {
-	f, _ := os.OpenFile("/tmp/shopify-debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	defer f.Close()
-	f.WriteString(time.Now().Format("15:04:05") + " " + msg + "\n")
-}
-
-func boolToInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
-}
 
 type tickMsg time.Time
 
@@ -132,27 +118,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch m.vista {
 	case VistaMenu:
-		debugLog("Vista: Menu")
 		return m.updateMenu(msg)
 	case VistaAgregarTienda:
-		debugLog("Vista: AgregarTienda")
 		return m.updateAgregarTienda(msg)
 	case VistaSeleccionarMetodo:
-		debugLog("Vista: SeleccionarMetodo")
 		return m.updateSeleccionarMetodo(msg)
 	case VistaInputGit:
-		debugLog("Vista: InputGit")
 		return m.updateInputGit(msg)
 	case VistaSeleccionarTienda:
-		debugLog("Vista: SeleccionarTienda")
 		return m.updateSeleccionarTienda(msg)
 	case VistaSeleccionarModo:
-		debugLog("Vista: SeleccionarModo")
 		return m.updateSeleccionarModo(msg)
 	case VistaLogs:
 		return m.updateLogs(msg)
 	case VistaServidores:
-		debugLog("Vista: Servidores")
 		return m.updateServidores(msg)
 	case VistaPopup:
 		return m.updatePopup(msg)
@@ -381,20 +360,16 @@ func (m Model) updateInputGit(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
-	debugLog("=== updateSeleccionarTienda llamado ===")
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		key := msg.String()
-		debugLog("Tecla presionada: " + key)
 
 		var indiceSeleccionado int = -1
 
 		if len(key) == 1 && key >= "1" && key <= "9" {
 			indiceSeleccionado = int(key[0] - '1')
-			debugLog("Indice por número: " + key)
 		} else if key == "enter" || key == "l" {
 			indiceSeleccionado = m.lista.Index()
-			debugLog("Indice por enter/l: " + string(rune('0'+indiceSeleccionado)))
 		} else if key == "d" {
 			indice := m.lista.Index()
 			if indice >= 0 && indice < len(m.tiendas) {
@@ -421,10 +396,8 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if indiceSeleccionado >= 0 && indiceSeleccionado < len(m.tiendas) {
 			tienda := m.tiendas[indiceSeleccionado]
-			debugLog("Tienda seleccionada: " + tienda.Nombre)
 
 			if !existeDirectorio(tienda.Ruta) {
-				debugLog("ERROR: Directorio no existe: " + tienda.Ruta)
 				m.mensaje = IconError("El directorio no existe: " + tienda.Ruta)
 				return m, nil
 			}
@@ -432,27 +405,22 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.tiendaParaDev = tienda
 			gestor := ObtenerGestor()
 			tieneServidor := gestor.TieneServidorActivo(tienda.Nombre)
-			debugLog("Tiene servidor activo: " + string(rune('0'+boolToInt(tieneServidor))))
 
 			if tieneServidor {
-				debugLog("Yendo a VistaLogs (servidor ya activo)")
 				m.vista = VistaLogs
 				m.logsScroll = 0
 				m.mensaje = ""
 				return m, tickCmd()
 			}
 
-			debugLog("Intentando iniciar servidor...")
 			servidor, err := gestor.IniciarServidor(tienda)
 			if err != nil {
-				debugLog("ERROR iniciando servidor: " + err.Error())
 				m.mensaje = IconError(err.Error())
 				m.vista = VistaLogs
 				m.logsScroll = 0
 				return m, tickCmd()
 			}
 
-			debugLog("Servidor iniciado OK: " + servidor.URL)
 			m.mensaje = IconSuccess("Servidor iniciado en " + servidor.URL)
 			m.vista = VistaLogs
 			m.logsScroll = 0
