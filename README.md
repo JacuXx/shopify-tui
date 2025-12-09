@@ -30,12 +30,12 @@ npm uninstall -g shopify-cli-tui
 ## ▶️ Ejecutar
 
 ```bash
-sho
+sho .
 ```
 
 > **Requisito:** Necesitas tener [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) instalado: `npm install -g @shopify/cli`
 
-### ⚠️ Si el comando `sho` no se encuentra
+### ⚠️ Si el comando `sho .` no se encuentra
 
 Si después de instalar aparece `command not found: sho`, es porque el directorio de npm global no está en tu PATH.
 
