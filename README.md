@@ -24,7 +24,7 @@ npm update -g shopify-cli-tui
 ## ▶️ Ejecutar
 
 ```bash
-shopify-cli
+sho
 ```
 
 > **Requisito:** Necesitas tener [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) instalado: `npm install -g @shopify/cli`
