@@ -31,6 +31,19 @@ function getBinaryName() {
   return `shopify-tui-${p}-${a}${ext}`;
 }
 
+function cleanOldBinaries(binDir) {
+  const oldNames = ['shopify-cli', 'shopify-cli.exe', 'sho.', 'sho..exe'];
+  oldNames.forEach(name => {
+    const oldPath = path.join(binDir, name);
+    if (fs.existsSync(oldPath)) {
+      try {
+        fs.unlinkSync(oldPath);
+        console.log(`🧹 Eliminado binario viejo: ${name}`);
+      } catch (e) {}
+    }
+  });
+}
+
 function install() {
   const binaryName = getBinaryName();
   const binDir = path.join(__dirname, '..', 'bin');
@@ -47,13 +60,9 @@ function install() {
     process.exit(1);
   }
   
+  cleanOldBinaries(binDir);
+  
   if (fs.existsSync(destPath)) {
-    const sourceStats = fs.statSync(sourcePath);
-    const destStats = fs.statSync(destPath);
-    if (sourceStats.size === destStats.size) {
-      console.log('✅ sho ya está instalado');
-      return;
-    }
     fs.unlinkSync(destPath);
   }
   
