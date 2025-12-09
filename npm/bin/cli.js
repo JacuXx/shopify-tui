@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { spawn } = require('child_process');
+const { execFileSync } = require('child_process');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
@@ -26,16 +26,16 @@ function getBinaryPath() {
 }
 
 const binaryPath = getBinaryPath();
-const child = spawn(binaryPath, process.argv.slice(2), {
-  stdio: 'inherit',
-  env: process.env
-});
 
-child.on('error', (err) => {
+try {
+  execFileSync(binaryPath, process.argv.slice(2), {
+    stdio: 'inherit',
+    env: process.env
+  });
+} catch (err) {
+  if (err.status !== null) {
+    process.exit(err.status);
+  }
   console.error('❌ Error al ejecutar sho:', err.message);
   process.exit(1);
-});
-
-child.on('exit', (code) => {
-  process.exit(code || 0);
-});
+}
