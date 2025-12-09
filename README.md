@@ -21,6 +21,12 @@ npm install -g shopify-cli-tui
 npm update -g shopify-cli-tui
 ```
 
+## 🗑️ Desinstalar
+
+```bash
+npm uninstall -g shopify-cli-tui
+```
+
 ## ▶️ Ejecutar
 
 ```bash
