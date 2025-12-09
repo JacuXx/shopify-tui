@@ -35,6 +35,30 @@ sho
 
 > **Requisito:** Necesitas tener [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) instalado: `npm install -g @shopify/cli`
 
+### ⚠️ Si el comando `sho` no se encuentra
+
+Si después de instalar aparece `command not found: sho`, es porque el directorio de npm global no está en tu PATH.
+
+**macOS / Linux:**
+```bash
+# Ver dónde está el directorio bin de npm
+npm config get prefix
+
+# Agregar al PATH (reemplaza la ruta si es diferente)
+export PATH="$HOME/.npm-global/bin:$PATH"
+
+# Hacerlo permanente (zsh)
+echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+# Hacerlo permanente (bash)
+echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**Windows:**
+Asegúrate de que npm está en el PATH del sistema o ejecuta desde PowerShell como administrador.
+
 ---
 
 ## ✨ Características
