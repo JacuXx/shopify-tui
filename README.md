@@ -15,6 +15,12 @@ CLI interactivo tipo Vim para gestionar múltiples tiendas Shopify. Permite inic
 npm install -g shopify-cli-tui
 ```
 
+## 🔄 Actualización
+
+```bash
+npm update -g shopify-cli-tui
+```
+
 ## ▶️ Ejecutar
 
 ```bash
