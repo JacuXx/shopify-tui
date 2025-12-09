@@ -35,7 +35,7 @@ function install() {
   const binaryName = getBinaryName();
   const binDir = path.join(__dirname, '..', 'bin');
   const sourcePath = path.join(binDir, binaryName);
-  const destName = os.platform() === 'win32' ? 'sho..exe' : 'sho.';
+  const destName = os.platform() === 'win32' ? 'sho.exe' : 'sho';
   const destPath = path.join(binDir, destName);
   
   if (!fs.existsSync(sourcePath)) {
@@ -51,13 +51,13 @@ function install() {
     const sourceStats = fs.statSync(sourcePath);
     const destStats = fs.statSync(destPath);
     if (sourceStats.size === destStats.size) {
-      console.log('✅ sho. ya está instalado');
+      console.log('✅ sho ya está instalado');
       return;
     }
     fs.unlinkSync(destPath);
   }
   
-  console.log(`📦 Configurando sho. para ${os.platform()}/${os.arch()}...`);
+  console.log(`📦 Configurando sho para ${os.platform()}/${os.arch()}...`);
   
   try {
     fs.copyFileSync(sourcePath, destPath);
@@ -66,9 +66,9 @@ function install() {
       fs.chmodSync(destPath, 0o755);
     }
     
-    console.log('✅ sho. instalado correctamente!');
+    console.log('✅ sho instalado correctamente!');
     console.log('');
-    console.log('🚀 Ejecuta: sho.');
+    console.log('🚀 Ejecuta: sho');
     
   } catch (err) {
     console.error('❌ Error configurando binario:', err.message);

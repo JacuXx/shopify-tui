@@ -1,9 +1,9 @@
 {
   "name": "shopify-cli-tui",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "CLI interactivo tipo Vim para gestionar tiendas Shopify",
   "bin": {
-    "sho.": "bin/cli.js"
+    "sho": "bin/cli.js"
   },
   "scripts": {
     "postinstall": "node scripts/install.js"

@@ -7,12 +7,11 @@ const fs = require('fs');
 
 function getBinaryPath() {
   const platform = os.platform();
-  const arch = os.arch();
   
-  let binaryName = 'sho.';
+  let binaryName = 'sho';
   
   if (platform === 'win32') {
-    binaryName = 'sho..exe';
+    binaryName = 'sho.exe';
   }
   
   const binaryPath = path.join(__dirname, binaryName);
@@ -33,7 +32,7 @@ const child = spawn(binaryPath, process.argv.slice(2), {
 });
 
 child.on('error', (err) => {
-  console.error('❌ Error al ejecutar sho.:', err.message);
+  console.error('❌ Error al ejecutar sho:', err.message);
   process.exit(1);
 });
 
