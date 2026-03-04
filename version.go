@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	Version        = "1.5.6"
+	Version        = "1.5.7"
 	NpmPackageName = "shopify-cli-tui"
 )
 
