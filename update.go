@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"strings"
 	"time"
 
@@ -373,13 +374,24 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else if key == "d" {
 			indice := m.lista.Index()
 			if indice >= 0 && indice < len(m.tiendas) {
-				nombreEliminada := m.tiendas[indice].Nombre
+				tienda := m.tiendas[indice]
+				nombreEliminada := tienda.Nombre
+				rutaEliminada := tienda.Ruta
+
+				// Eliminar los archivos físicos de la tienda
+				if rutaEliminada != "" {
+					if err := os.RemoveAll(rutaEliminada); err != nil {
+						m.mensaje = IconError("Error al eliminar archivos: " + err.Error())
+						return m, nil
+					}
+				}
+
 				m.tiendas = eliminarTienda(m.tiendas, indice)
 
 				if err := guardarTiendas(m.tiendas); err != nil {
-					m.mensaje = IconError("Error al eliminar: " + err.Error())
+					m.mensaje = IconError("Error al eliminar del registro: " + err.Error())
 				} else {
-					m.mensaje = Icons.Delete + " Tienda '" + nombreEliminada + "' eliminada"
+					m.mensaje = Icons.Delete + " Tienda '" + nombreEliminada + "' eliminada por completo"
 				}
 
 				if len(m.tiendas) == 0 {
