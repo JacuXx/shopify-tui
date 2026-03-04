@@ -242,15 +242,23 @@ func crearListaModos(tienda Tienda, tieneServidor bool) []list.Item {
 
 func crearLista(items []list.Item, titulo string, ancho, alto int) list.Model {
 
-	alturaItems := len(items)*2 + 4
-	if alto > 0 && alto-6 > alturaItems {
-		alturaItems = alto - 6
-	}
-	if alturaItems < 10 {
-		alturaItems = 10
+	// Si hay alto definido, restamos espacio para el banner (aprox 7-8 líneas)
+	// y el margen inferior.
+	alturaBanner := 8
+	alturaDisponible := alto - alturaBanner - 4
+
+	alturaItems := len(items)*2 + 6
+	if alto > 0 && alturaDisponible > alturaItems {
+		alturaItems = alturaDisponible
 	}
 
-	anchoLista := 55
+	if alturaItems < 10 && alto > 15 {
+		alturaItems = 10
+	} else if alto <= 15 {
+		alturaItems = alto - 2
+	}
+
+	anchoLista := 60
 	if ancho > 0 && ancho-4 > anchoLista {
 		anchoLista = ancho - 4
 	}

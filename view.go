@@ -178,28 +178,37 @@ func renderListaTiendas(tiendas []Tienda, selectedIndex int, titulo string) stri
 }
 
 func (m Model) View() string {
+	banner := renderBanner()
+	var contenido string
+
 	switch m.vista {
 	case VistaMenu:
-		return m.vistaMenu()
+		contenido = m.vistaMenu()
 	case VistaAgregarTienda:
-		return m.vistaAgregarTienda()
+		contenido = m.vistaAgregarTienda()
 	case VistaSeleccionarMetodo:
-		return m.vistaSeleccionarMetodo()
+		contenido = m.vistaSeleccionarMetodo()
 	case VistaInputGit:
-		return m.vistaInputGit()
+		contenido = m.vistaInputGit()
 	case VistaSeleccionarTienda:
-		return m.vistaSeleccionarTienda()
+		contenido = m.vistaSeleccionarTienda()
 	case VistaSeleccionarModo:
-		return m.vistaSeleccionarModo()
+		contenido = m.vistaSeleccionarModo()
 	case VistaLogs:
-		return m.vistaLogs()
+		contenido = m.vistaLogs()
 	case VistaServidores:
-		return m.vistaServidores()
+		contenido = m.vistaServidores()
 	case VistaPopup:
-		return m.vistaPopup()
+		contenido = m.vistaPopup()
 	default:
-		return m.vistaMenu()
+		contenido = m.vistaMenu()
 	}
+
+	if m.vista == VistaMenu {
+		return contenido
+	}
+
+	return banner + "\n" + contenido
 }
 
 func (m Model) vistaMenu() string {

@@ -27,7 +27,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.ancho = msg.Width
 		m.alto = msg.Height
-		m.lista.SetSize(msg.Width-4, msg.Height-6)
+		
+		// Ajustamos el tamaño de la lista considerando el banner (aprox 8-10 líneas)
+		m.lista.SetSize(msg.Width-4, msg.Height-14)
 		return m, nil
 
 	case tea.KeyMsg:
