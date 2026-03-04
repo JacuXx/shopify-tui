@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -361,6 +362,12 @@ func (m Model) updateInputGit(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.lista.FilterState() == list.Filtering {
+		var cmd tea.Cmd
+		m.lista, cmd = m.lista.Update(msg)
+		return m, cmd
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		key := msg.String()
@@ -369,74 +376,91 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if len(key) == 1 && key >= "1" && key <= "9" {
 			indiceSeleccionado = int(key[0] - '1')
+			if indiceSeleccionado >= len(m.lista.VisibleItems()) {
+				indiceSeleccionado = -1
+			} else {
+				m.lista.Select(indiceSeleccionado)
+				indiceSeleccionado = m.lista.Index()
+			}
 		} else if key == "enter" || key == "l" {
 			indiceSeleccionado = m.lista.Index()
 		} else if key == "d" {
-			indice := m.lista.Index()
-			if indice >= 0 && indice < len(m.tiendas) {
-				tienda := m.tiendas[indice]
-				nombreEliminada := tienda.Nombre
-				rutaEliminada := tienda.Ruta
-
-				// Eliminar los archivos físicos de la tienda
-				if rutaEliminada != "" {
-					if err := os.RemoveAll(rutaEliminada); err != nil {
-						m.mensaje = IconError("Error al eliminar archivos: " + err.Error())
-						return m, nil
+			if item, ok := m.lista.SelectedItem().(itemTienda); ok {
+				tienda := item.tienda
+				indiceReal := -1
+				for i, t := range m.tiendas {
+					if t.Nombre == tienda.Nombre && t.URL == tienda.URL {
+						indiceReal = i
+						break
 					}
 				}
 
-				m.tiendas = eliminarTienda(m.tiendas, indice)
+				if indiceReal != -1 {
+					nombreEliminada := tienda.Nombre
+					rutaEliminada := tienda.Ruta
 
-				if err := guardarTiendas(m.tiendas); err != nil {
-					m.mensaje = IconError("Error al eliminar del registro: " + err.Error())
-				} else {
-					m.mensaje = Icons.Delete + " Tienda '" + nombreEliminada + "' eliminada por completo"
+					if rutaEliminada != "" {
+						if err := os.RemoveAll(rutaEliminada); err != nil {
+							m.mensaje = IconError("Error al eliminar archivos: " + err.Error())
+							return m, nil
+						}
+					}
+
+					m.tiendas = eliminarTienda(m.tiendas, indiceReal)
+
+					if err := guardarTiendas(m.tiendas); err != nil {
+						m.mensaje = IconError("Error al eliminar del registro: " + err.Error())
+					} else {
+						m.mensaje = Icons.Delete + " Tienda '" + nombreEliminada + "' eliminada por completo"
+					}
+
+					if len(m.tiendas) == 0 {
+						m.recrearMenuPrincipal()
+						m.vista = VistaMenu
+						return m, nil
+					}
+
+					items := crearListaTiendas(m.tiendas)
+					m.lista.SetItems(items)
 				}
-
-				if len(m.tiendas) == 0 {
-					m.vista = VistaMenu
-					m.recrearMenuPrincipal()
-					return m, nil
-				}
-
-				items := crearListaTiendas(m.tiendas)
-				m.lista = crearLista(items, Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
 			}
 			return m, nil
 		}
 
-		if indiceSeleccionado >= 0 && indiceSeleccionado < len(m.tiendas) {
-			tienda := m.tiendas[indiceSeleccionado]
+		if indiceSeleccionado >= 0 {
+			// Usar el item seleccionado de la lista (maneja filtrado automáticamente)
+			if item, ok := m.lista.SelectedItem().(itemTienda); ok {
+				tienda := item.tienda
+				
+				if !existeDirectorio(tienda.Ruta) {
+					m.mensaje = IconError("El directorio no existe: " + tienda.Ruta)
+					return m, nil
+				}
 
-			if !existeDirectorio(tienda.Ruta) {
-				m.mensaje = IconError("El directorio no existe: " + tienda.Ruta)
-				return m, nil
-			}
+				m.tiendaParaDev = tienda
+				gestor := ObtenerGestor()
+				tieneServidor := gestor.TieneServidorActivo(tienda.Nombre)
 
-			m.tiendaParaDev = tienda
-			gestor := ObtenerGestor()
-			tieneServidor := gestor.TieneServidorActivo(tienda.Nombre)
+				if tieneServidor {
+					m.vista = VistaLogs
+					m.logsScroll = 0
+					m.mensaje = ""
+					return m, tickCmd()
+				}
 
-			if tieneServidor {
+				servidor, err := gestor.IniciarServidor(tienda)
+				if err != nil {
+					m.mensaje = IconError(err.Error())
+					m.vista = VistaLogs
+					m.logsScroll = 0
+					return m, tickCmd()
+				}
+
+				m.mensaje = IconSuccess("Servidor iniciado en " + servidor.URL)
 				m.vista = VistaLogs
 				m.logsScroll = 0
-				m.mensaje = ""
 				return m, tickCmd()
 			}
-
-			servidor, err := gestor.IniciarServidor(tienda)
-			if err != nil {
-				m.mensaje = IconError(err.Error())
-				m.vista = VistaLogs
-				m.logsScroll = 0
-				return m, tickCmd()
-			}
-
-			m.mensaje = IconSuccess("Servidor iniciado en " + servidor.URL)
-			m.vista = VistaLogs
-			m.logsScroll = 0
-			return m, tickCmd()
 		}
 	}
 

@@ -257,9 +257,9 @@ func crearLista(items []list.Item, titulo string, ancho, alto int) list.Model {
 
 	lista := list.New(items, list.NewDefaultDelegate(), anchoLista, alturaItems)
 	lista.Title = titulo
-	lista.SetShowStatusBar(false)
-	lista.SetFilteringEnabled(false)
-	lista.SetShowPagination(false)
+	lista.SetShowStatusBar(true)
+	lista.SetFilteringEnabled(true)
+	lista.SetShowPagination(true)
 	return lista
 }
 

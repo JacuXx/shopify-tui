@@ -347,9 +347,8 @@ func (m Model) vistaInputGit() string {
 }
 
 func (m Model) vistaSeleccionarTienda() string {
-	var b strings.Builder
-
 	if len(m.tiendas) == 0 {
+		var b strings.Builder
 		b.WriteString(estiloTitulo.Render("🚀 Ejecutar Theme Dev"))
 		b.WriteString("\n\n")
 		b.WriteString(estiloError.Render("No hay tiendas guardadas."))
@@ -360,26 +359,8 @@ func (m Model) vistaSeleccionarTienda() string {
 		return estiloContenedor.Render(b.String())
 	}
 
-	s := renderListaTiendas(m.tiendas, m.lista.Index(), Icons.Server+" Selecciona tienda")
-
-	idx := m.lista.Index()
-	if idx >= 0 && idx < len(m.tiendas) {
-		s += estiloInfo.Render("📁 " + m.tiendas[idx].Ruta)
-		s += "\n"
-	}
-
-	if m.mensaje != "" {
-		if strings.HasPrefix(m.mensaje, "✅") || strings.HasPrefix(m.mensaje, Icons.Success) {
-			s += estiloExito.Render(m.mensaje)
-		} else {
-			s += estiloError.Render(m.mensaje)
-		}
-		s += "\n"
-	}
-
-	s += estiloAyuda.Render("[1-9] l/enter: iniciar servidor | d: eliminar | q: volver")
-
-	return s
+	// Usamos la m.lista.View() directamente para tener buscador y paginación
+	return estiloContenedor.Render(m.lista.View())
 }
 
 func (m Model) vistaSeleccionarModo() string {
