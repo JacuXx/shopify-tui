@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/common-nighthawk/go-figure"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -57,6 +58,51 @@ var (
 	estiloDesc = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#626262"))
 )
+
+func renderBanner() string {
+	myFigure := figure.NewFigure("SHOPIFY TUI", "slant", true)
+	asciiArt := myFigure.String()
+
+	lineas := strings.Split(asciiArt, "\n")
+	var banner strings.Builder
+
+	// Colores Shopify sólidos
+	verdeShopify := lipgloss.Color("#95BF47")
+	blancoShopify := lipgloss.Color("#FFFFFF")
+	colorSombra := lipgloss.Color("#2A2A2A")
+
+	for _, linea := range lineas {
+		if strings.TrimSpace(linea) == "" {
+			continue
+		}
+
+		runas := []rune(linea)
+		for j, R := range runas {
+			if R != ' ' {
+
+				progreso := float64(j) / float64(len(runas))
+				var color lipgloss.Color
+				if progreso < 0.65 { 
+					color = verdeShopify
+				} else {
+					color = blancoShopify
+				}
+
+				estilo := lipgloss.NewStyle().Foreground(color).Bold(true)
+				banner.WriteString(estilo.Render(string(R)))
+			} else {
+				if j > 0 && runas[j-1] != ' ' {
+					estiloSombra := lipgloss.NewStyle().Foreground(colorSombra)
+					banner.WriteString(estiloSombra.Render("░"))
+				} else {
+					banner.WriteRune(' ')
+				}
+			}
+		}
+		banner.WriteString("\n")
+	}
+	return banner.String()
+}
 
 func renderMenuConAtajos(items []itemMenu, selectedIndex int, titulo string) string {
 	var b strings.Builder
@@ -165,7 +211,10 @@ func (m Model) vistaMenu() string {
 		}
 	}
 
-	s := renderMenuConAtajos(items, m.lista.Index(), Icons.App+" Shopify TUI")
+	banner := renderBanner()
+	menu := renderMenuConAtajos(items, m.lista.Index(), Icons.App+" Configuración")
+
+	s := banner + "\n" + menu
 
 	if m.hayActualizacion {
 		estiloAviso := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD700")).Bold(true)
