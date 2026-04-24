@@ -10,6 +10,42 @@ CLI interactivo tipo Vim para gestionar múltiples tiendas Shopify. Permite inic
 
 ## 🚀 Instalación
 
+### Windows (PowerShell)
+
+```powershell
+# Descarga el script de instalación
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.ps1" -OutFile install.ps1
+
+# Ejecuta como administrador
+powershell -ExecutionPolicy Bypass -File install.ps1
+```
+
+### macOS / Linux (Bash)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.sh | bash
+```
+
+### Instalación Manual (Go)
+
+Si prefieres compilar desde fuente:
+```bash
+# Clonar el repositorio
+git clone https://github.com/JacuXx/shopify-tui.git
+cd shopify-tui
+
+# Compilar
+go build -o shopify-cli .
+
+# Instalar (Linux/macOS)
+sudo mv shopify-cli /usr/local/bin/
+
+# Instalar (Windows - copiar a un directorio en el PATH)
+move shopify-cli.exe C:\Program Files\shopify-cli\
+```
+
+### NPM Global (Legacy)
+
 ```bash
 npm install -g shopify-cli-tui
 ```

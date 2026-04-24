@@ -1,35 +1,62 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { execSync } = require('child_process');
+const https = require('https');
 
 function getBinaryName() {
   const platform = os.platform();
   const arch = os.arch();
-  
+
+  // Mapear arquitectura Node.js a Go
+  const archMap = {
+    'x64': 'amd64',
+    'arm64': 'arm64',
+    'ia32': '386'
+  };
+
   const platformMap = {
     'darwin': 'darwin',
     'linux': 'linux',
-    'win32': 'win32'
+    'win32': 'windows'
   };
-  
-  const archMap = {
-    'x64': 'x64',
-    'arm64': 'arm64'
-  };
-  
-  const p = platformMap[platform];
-  const a = archMap[arch];
-  
-  if (!p || !a) {
+
+  const goArch = archMap[arch];
+  const goOS = platformMap[platform];
+
+  if (!goOS || !goArch) {
     console.error(`❌ Plataforma no soportada: ${platform}/${arch}`);
-    console.error('   Plataformas soportadas: linux, darwin (macOS), win32');
-    console.error('   Arquitecturas soportadas: x64, arm64');
+    console.error('   Plataformas soportadas: linux, darwin (macOS), windows');
+    console.error('   Arquitecturas soportadas: x64, arm64, ia32');
     process.exit(1);
   }
-  
+
   const ext = platform === 'win32' ? '.exe' : '';
-  return `shopify-tui-${p}-${a}${ext}`;
+  return `shopify-cli-${goOS}-${goArch}${ext}`;
+}
+
+function downloadBinary(downloadUrl, destPath) {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(destPath);
+    https.get(downloadUrl, (response) => {
+      if (response.statusCode === 302 || response.statusCode === 301) {
+        // Seguir redirecciones
+        downloadBinary(response.headers.location, destPath).then(resolve).catch(reject);
+        return;
+      }
+      if (response.statusCode !== 200) {
+        reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
+        return;
+      }
+      response.pipe(file);
+      file.on('finish', () => {
+        file.close();
+        resolve();
+      });
+    }).on('error', (err) => {
+      fs.unlink(destPath, () => {});
+      reject(err);
+    });
+  });
 }
 
 function cleanOldBinaries(binDir) {
@@ -119,46 +146,55 @@ function setupPath() {
   }
 }
 
-function install() {
+async function install() {
   const binaryName = getBinaryName();
   const binDir = path.join(__dirname, '..', 'bin');
-  const sourcePath = path.join(binDir, binaryName);
+
+  // Crear directorio bin si no existe
+  if (!fs.existsSync(binDir)) {
+    fs.mkdirSync(binDir, { recursive: true });
+  }
+
   const destName = os.platform() === 'win32' ? 'sho.exe' : 'sho';
   const destPath = path.join(binDir, destName);
-  
-  if (!fs.existsSync(sourcePath)) {
-    console.error(`❌ Binario no encontrado: ${binaryName}`);
-    console.error('   Los binarios incluidos son:');
-    fs.readdirSync(binDir).filter(f => f.startsWith('shopify-tui-')).forEach(f => {
-      console.error(`   - ${f}`);
-    });
-    process.exit(1);
-  }
-  
+
   cleanOldBinaries(binDir);
-  
+
   if (fs.existsSync(destPath)) {
     fs.unlinkSync(destPath);
   }
-  
+
   console.log(`📦 Configurando sho para ${os.platform()}/${os.arch()}...`);
-  
+
   try {
-    fs.copyFileSync(sourcePath, destPath);
-    
+    // Intentar descargar desde GitHub Releases
+    console.log(`📥 Descargando ${binaryName} desde GitHub...`);
+    const downloadUrl = `https://github.com/JacuXx/shopify-tui/releases/download/latest/${binaryName}`;
+
+    const tempPath = path.join(binDir, `${binaryName}.tmp`);
+
+    await downloadBinary(downloadUrl, tempPath);
+    fs.renameSync(tempPath, destPath);
+
     if (os.platform() !== 'win32') {
       fs.chmodSync(destPath, 0o755);
     }
-    
+
     console.log('✅ sho instalado correctamente!');
-    
+
     setupPath();
-    
+
     console.log('');
     console.log('🚀 Ejecuta: sho');
-    
+
   } catch (err) {
-    console.error('❌ Error configurando binario:', err.message);
+    console.error('❌ Error instalando binario:', err.message);
+    console.error('');
+    console.error('💡 Solución alternativa - Compilar desde fuente:');
+    console.error('   1. git clone https://github.com/JacuXx/shopify-tui.git');
+    console.error('   2. cd shopify-tui');
+    console.error('   3. go build -o sho .');
+    console.error('   4. Copia el binario a:', destPath);
     process.exit(1);
   }
 }
