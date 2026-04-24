@@ -5,14 +5,29 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/JacuXx/shopify-cli/injection"
+	"github.com/JacuXx/shopify-cli/presentation"
 )
 
 func main() {
+	// Inicializar contenedor de dependencias
+	container, err := injection.NewContainer()
+	if err != nil {
+		fmt.Printf("Error al inicializar contenedor: %v\n", err)
+		os.Exit(1)
+	}
 
-	InitIcons()
+	// Crear modelo de presentación con las dependencias inyectadas
+	model, err := presentation.NewModel(container)
+	if err != nil {
+		fmt.Printf("Error al crear modelo: %v\n", err)
+		os.Exit(1)
+	}
 
+	// Iniciar programa Bubbletea
 	p := tea.NewProgram(
-		modeloInicial(),
+		model,
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)
