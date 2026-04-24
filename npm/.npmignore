@@ -1,9 +1,9 @@
 # Don't include pre-built binaries in npm package
 # They are downloaded during postinstall from GitHub Releases
-bin/sho*
+bin/sho
+bin/sho.exe
 bin/shopify-*
 bin/*.tmp
 
-# Development files
-scripts/
+# Development files only (keep scripts/install.js)
 .gitignore
