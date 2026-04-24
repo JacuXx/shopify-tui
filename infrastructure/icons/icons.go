@@ -8,23 +8,23 @@ import (
 
 // IconSet contiene los iconos de la aplicación
 type IconSet struct {
-	App       string
-	Server    string
-	ServerOn  string
-	Download  string
-	Upload    string
-	Git       string
-	Terminal  string
-	Editor    string
-	Logs      string
-	Stop      string
-	Rocket    string
-	Login     string
-	Add       string
-	Success   string
-	Error     string
-	Warning   string
-	Info      string
+	App      string
+	Server   string
+	ServerOn string
+	Download string
+	Upload   string
+	Git      string
+	Terminal string
+	Editor   string
+	Logs     string
+	Stop     string
+	Rocket   string
+	Login    string
+	Add      string
+	Success  string
+	Error    string
+	Warning  string
+	Info     string
 }
 
 var (

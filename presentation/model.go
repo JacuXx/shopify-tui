@@ -8,8 +8,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 
 	"github.com/JacuXx/shopify-cli/domain"
-	"github.com/JacuXx/shopify-cli/injection"
 	"github.com/JacuXx/shopify-cli/infrastructure/icons"
+	"github.com/JacuXx/shopify-cli/injection"
 )
 
 // Vista representa la vista actual de la aplicación
