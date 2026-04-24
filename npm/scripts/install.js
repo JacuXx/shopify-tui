@@ -3,6 +3,12 @@ const path = require('path');
 const os = require('os');
 const https = require('https');
 
+function getPackageVersion() {
+  const packageJsonPath = path.join(__dirname, '..', 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  return packageJson.version;
+}
+
 function getBinaryName() {
   const platform = os.platform();
   const arch = os.arch();
@@ -169,7 +175,8 @@ async function install() {
   try {
     // Intentar descargar desde GitHub Releases
     console.log(`📥 Descargando ${binaryName} desde GitHub...`);
-    const downloadUrl = `https://github.com/JacuXx/shopify-tui/releases/download/latest/${binaryName}`;
+    const version = getPackageVersion();
+    const downloadUrl = `https://github.com/JacuXx/shopify-tui/releases/download/v${version}/${binaryName}`;
 
     const tempPath = path.join(binDir, `${binaryName}.tmp`);
 
