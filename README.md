@@ -20,6 +20,11 @@ npm install -g shopify-cli-tui
 npm update -g shopify-cli-tui
 ```
 
+> Si el CLI te avisa de una nueva versión pero `npm update` no la instala, fuerza la instalación con:
+> ```bash
+> npm install -g shopify-cli-tui@latest
+> ```
+
 ## 🗑️ Desinstalar
 
 ```bash
