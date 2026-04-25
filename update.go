@@ -346,23 +346,42 @@ func (m Model) updateSeleccionarMetodo(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) updateInputGit(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "enter", "l":
-			gitURL := m.inputGit.Value()
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		switch keyMsg.String() {
+		case "enter":
+			gitURL := strings.TrimSpace(m.inputGit.Value())
 			if gitURL == "" {
 				m.mensaje = icons.IconWarning("Por favor ingresa la URL del repositorio")
 				return m, nil
 			}
-
+			if !m.gitURLConfirmada {
+				// Primer Enter: mostrar confirmación
+				m.gitURLConfirmada = true
+				m.mensaje = icons.IconInfo("URL: " + gitURL + " — presiona Enter para confirmar")
+				return m, nil
+			}
+			// Segundo Enter: clonar
+			m.gitURLConfirmada = false
 			m.tiendaTemporal.GitURL = gitURL
 			return m, commands.EjecutarDescargaConExec(m.tiendaTemporal, m.tiendaTemporal.Ruta)
+		case "esc", "q":
+			m.gitURLConfirmada = false
+		}
+	}
+
+	// Cualquier otra tecla resetea la confirmación pendiente
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		if keyMsg.String() != "enter" {
+			m.gitURLConfirmada = false
 		}
 	}
 
 	var cmd tea.Cmd
 	m.inputGit, cmd = m.inputGit.Update(msg)
+	// Limpiar newlines que puedan quedar del paste
+	if val := m.inputGit.Value(); strings.ContainsRune(val, '\n') || strings.ContainsRune(val, '\r') {
+		m.inputGit.SetValue(strings.TrimSpace(val))
+	}
 	return m, cmd
 }
 

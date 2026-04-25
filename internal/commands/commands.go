@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -46,9 +47,13 @@ func EjecutarDescargaConExec(tienda domain.Tienda, directorio string) tea.Cmd {
 
 	t := tienda
 	t.Ruta = directorio
+	esGitClone := tienda.Metodo == domain.MetodoGitClone
 
 	return tea.ExecProcess(cmd, func(err error) tea.Msg {
 		if err != nil {
+			if esGitClone && strings.Contains(err.Error(), "128") {
+				return ErrorMsg{Err: fmt.Errorf("git clone falló. Verifica:\n  • URL correcta\n  • Acceso al repo (SSH key o token)\n  • Para repos privados: https://github.com/usuario/repo.git")}
+			}
 			return ErrorMsg{Err: err}
 		}
 		return ComandoTerminadoMsg{

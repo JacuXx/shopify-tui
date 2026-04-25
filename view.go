@@ -271,9 +271,11 @@ func (m Model) vistaInputGit() string {
 
 	b.WriteString(styles.Ayuda.Render("Ejemplos:"))
 	b.WriteString("\n")
-	b.WriteString(styles.Ayuda.Render("  SSH:   git@github.com:usuario/tema.git"))
+	b.WriteString(styles.Ayuda.Render("  SSH:    git@github.com:usuario/tema.git"))
 	b.WriteString("\n")
-	b.WriteString(styles.Ayuda.Render("  HTTPS: https://github.com/usuario/tema.git"))
+	b.WriteString(styles.Ayuda.Render("  HTTPS:  https://github.com/usuario/tema.git"))
+	b.WriteString("\n")
+	b.WriteString(styles.Ayuda.Render("  Privado: https://TOKEN@github.com/usuario/tema.git"))
 	b.WriteString("\n\n")
 
 	if m.mensaje != "" {
@@ -281,7 +283,11 @@ func (m Model) vistaInputGit() string {
 		b.WriteString("\n\n")
 	}
 
-	b.WriteString(styles.Ayuda.Render("enter: clonar | q: volver"))
+	if m.gitURLConfirmada {
+		b.WriteString(styles.Info.Render("enter: confirmar clone | cualquier tecla: cancelar"))
+	} else {
+		b.WriteString(styles.Ayuda.Render("enter: continuar | q: volver"))
+	}
 
 	return styles.Contenedor.Render(b.String())
 }

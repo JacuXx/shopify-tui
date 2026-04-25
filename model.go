@@ -51,10 +51,11 @@ type Model struct {
 	ancho       int
 	alto        int
 
-	logsScroll    int
-	modoSeleccion bool
-	popupIndex    int
-	vistaAnterior domain.Vista
+	logsScroll       int
+	modoSeleccion    bool
+	popupIndex       int
+	vistaAnterior    domain.Vista
+	gitURLConfirmada bool
 
 	hayActualizacion bool
 	versionNueva     string
