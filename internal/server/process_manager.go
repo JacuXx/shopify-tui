@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"bufio"
@@ -7,75 +7,29 @@ import (
 	"os/exec"
 	"sync"
 	"time"
+
+	"github.com/JacuXx/shopify-cli/internal/domain"
 )
 
-type ServidorActivo struct {
-	Tienda    Tienda
-	Proceso   *exec.Cmd
-	Puerto    int
-	Iniciado  time.Time
-	URL       string
-	Activo    bool
-	Logs      []string
-	LogsMutex sync.RWMutex
-	Stdin     io.WriteCloser
-}
-
-func (s *ServidorActivo) AgregarLog(linea string) {
-	s.LogsMutex.Lock()
-	defer s.LogsMutex.Unlock()
-
-	s.Logs = append(s.Logs, linea)
-
-	if len(s.Logs) > 100 {
-		s.Logs = s.Logs[len(s.Logs)-100:]
-	}
-}
-
-func (s *ServidorActivo) ObtenerLogs() []string {
-	s.LogsMutex.RLock()
-	defer s.LogsMutex.RUnlock()
-
-	copia := make([]string, len(s.Logs))
-	copy(copia, s.Logs)
-	return copia
-}
-
-func (s *ServidorActivo) EnviarInput(input string) error {
-	if s.Stdin == nil {
-		return fmt.Errorf("stdin no disponible")
-	}
-	_, err := s.Stdin.Write([]byte(input))
-	return err
-}
-
-type GestorServidores struct {
+// ProcessManager implementa Manager usando procesos reales del sistema operativo.
+type ProcessManager struct {
 	servidores map[string]*ServidorActivo
 	mutex      sync.RWMutex
 	puertos    map[int]bool
+	procesos   map[string]*exec.Cmd
 }
 
-var gestorGlobal = &GestorServidores{
-	servidores: make(map[string]*ServidorActivo),
-	puertos:    make(map[int]bool),
-}
-
-func ObtenerGestor() *GestorServidores {
-	return gestorGlobal
-}
-
-func (g *GestorServidores) ObtenerPuertoDisponible() int {
-	g.mutex.RLock()
-	defer g.mutex.RUnlock()
-
-	puerto := 9292
-	for g.puertos[puerto] {
-		puerto++
+// NewProcessManager crea un gestor de servidores listo para usar.
+func NewProcessManager() *ProcessManager {
+	return &ProcessManager{
+		servidores: make(map[string]*ServidorActivo),
+		puertos:    make(map[int]bool),
+		procesos:   make(map[string]*exec.Cmd),
 	}
-	return puerto
 }
 
-func (g *GestorServidores) IniciarServidor(tienda Tienda) (*ServidorActivo, error) {
+// IniciarServidor lanza shopify theme dev para la tienda dada.
+func (g *ProcessManager) IniciarServidor(tienda domain.Tienda) (*ServidorActivo, error) {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
@@ -96,7 +50,6 @@ func (g *GestorServidores) IniciarServidor(tienda Tienda) (*ServidorActivo, erro
 
 	servidor := &ServidorActivo{
 		Tienda:   tienda,
-		Proceso:  cmd,
 		Puerto:   puerto,
 		Iniciado: time.Now(),
 		URL:      fmt.Sprintf("http://127.0.0.1:%d", puerto),
@@ -125,15 +78,11 @@ func (g *GestorServidores) IniciarServidor(tienda Tienda) (*ServidorActivo, erro
 	}
 
 	g.servidores[tienda.Nombre] = servidor
+	g.procesos[tienda.Nombre] = cmd
 	g.puertos[puerto] = true
 
-	go func() {
-		leerLogs(stdout, servidor)
-	}()
-
-	go func() {
-		leerLogs(stderr, servidor)
-	}()
+	go leerLogs(stdout, servidor)
+	go leerLogs(stderr, servidor)
 
 	go func() {
 		cmd.Wait()
@@ -149,14 +98,8 @@ func (g *GestorServidores) IniciarServidor(tienda Tienda) (*ServidorActivo, erro
 	return servidor, nil
 }
 
-func leerLogs(pipe io.Reader, servidor *ServidorActivo) {
-	scanner := bufio.NewScanner(pipe)
-	for scanner.Scan() {
-		servidor.AgregarLog(scanner.Text())
-	}
-}
-
-func (g *GestorServidores) DetenerServidor(nombreTienda string) error {
+// DetenerServidor detiene el proceso de una tienda específica.
+func (g *ProcessManager) DetenerServidor(nombreTienda string) error {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
@@ -169,8 +112,9 @@ func (g *GestorServidores) DetenerServidor(nombreTienda string) error {
 		return fmt.Errorf("el servidor de '%s' ya está detenido", nombreTienda)
 	}
 
-	if servidor.Proceso != nil && servidor.Proceso.Process != nil {
-		if err := servidor.Proceso.Process.Kill(); err != nil {
+	cmd, tieneCmd := g.procesos[nombreTienda]
+	if tieneCmd && cmd.Process != nil {
+		if err := cmd.Process.Kill(); err != nil {
 			return fmt.Errorf("error al detener servidor: %v", err)
 		}
 	}
@@ -181,20 +125,24 @@ func (g *GestorServidores) DetenerServidor(nombreTienda string) error {
 	return nil
 }
 
-func (g *GestorServidores) DetenerTodos() {
+// DetenerTodos detiene todos los servidores activos.
+func (g *ProcessManager) DetenerTodos() {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
-	for _, servidor := range g.servidores {
-		if servidor.Activo && servidor.Proceso != nil && servidor.Proceso.Process != nil {
-			servidor.Proceso.Process.Kill()
+	for nombre, servidor := range g.servidores {
+		if servidor.Activo {
+			if cmd, ok := g.procesos[nombre]; ok && cmd.Process != nil {
+				cmd.Process.Kill()
+			}
 			servidor.Activo = false
 		}
 	}
 	g.puertos = make(map[int]bool)
 }
 
-func (g *GestorServidores) ObtenerServidoresActivos() []*ServidorActivo {
+// ObtenerServidoresActivos retorna solo los servidores con Activo=true.
+func (g *ProcessManager) ObtenerServidoresActivos() []*ServidorActivo {
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
@@ -207,7 +155,8 @@ func (g *GestorServidores) ObtenerServidoresActivos() []*ServidorActivo {
 	return activos
 }
 
-func (g *GestorServidores) ContarActivos() int {
+// ContarActivos retorna el número de servidores activos.
+func (g *ProcessManager) ContarActivos() int {
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
@@ -220,7 +169,8 @@ func (g *GestorServidores) ContarActivos() int {
 	return count
 }
 
-func (g *GestorServidores) TieneServidorActivo(nombreTienda string) bool {
+// TieneServidorActivo verifica si hay un servidor activo para la tienda.
+func (g *ProcessManager) TieneServidorActivo(nombreTienda string) bool {
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
@@ -230,7 +180,8 @@ func (g *GestorServidores) TieneServidorActivo(nombreTienda string) bool {
 	return false
 }
 
-func (g *GestorServidores) ObtenerServidor(nombreTienda string) *ServidorActivo {
+// ObtenerServidor retorna el servidor activo para la tienda, o nil si no existe.
+func (g *ProcessManager) ObtenerServidor(nombreTienda string) *ServidorActivo {
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
@@ -238,4 +189,11 @@ func (g *GestorServidores) ObtenerServidor(nombreTienda string) *ServidorActivo 
 		return servidor
 	}
 	return nil
+}
+
+func leerLogs(pipe io.Reader, servidor *ServidorActivo) {
+	scanner := bufio.NewScanner(pipe)
+	for scanner.Scan() {
+		servidor.AgregarLog(scanner.Text())
+	}
 }

@@ -1,104 +1,33 @@
-package main
+﻿package main
 
 import (
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/common-nighthawk/go-figure"
+	figure "github.com/common-nighthawk/go-figure"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/JacuXx/shopify-cli/internal/ui/icons"
+	"github.com/JacuXx/shopify-cli/internal/ui/styles"
+	"github.com/JacuXx/shopify-cli/internal/version"
 )
 
-var (
-	estiloTitulo = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#7D56F4")).
-			MarginBottom(1)
-
-	estiloExito = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#04B575")).
-			Bold(true)
-
-	estiloError = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FF6B6B")).
-			Bold(true)
-
-	estiloContenedor = lipgloss.NewStyle().
-				Padding(1, 2).
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("#7D56F4"))
-
-	estiloInputActivo = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#7D56F4")).
-				Bold(true)
-
-	estiloLabel = lipgloss.NewStyle().
-			Bold(true).
-			MarginBottom(0)
-
-	estiloAyuda = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#626262")).
-			MarginTop(1)
-
-	estiloInfo = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#7D56F4")).
-			Italic(true)
-
-	estiloAtajo = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FFB800")).
-			Bold(true)
-
-	estiloItemNormal = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#FFFFFF"))
-
-	estiloItemSeleccionado = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#7D56F4")).
-				Bold(true)
-
-	estiloDesc = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#626262"))
-)
+// Estilos centralizados en internal/ui/styles
 
 func renderBanner() string {
 	myFigure := figure.NewFigure("SHOPIFY TUI", "slant", true)
 	asciiArt := myFigure.String()
 
+	verdeShopify := lipgloss.NewStyle().Foreground(lipgloss.Color("#95BF47")).Bold(true)
+
 	lineas := strings.Split(asciiArt, "\n")
 	var banner strings.Builder
-
-	// Colores Shopify sólidos
-	verdeShopify := lipgloss.Color("#95BF47")
-	blancoShopify := lipgloss.Color("#FFFFFF")
-	colorSombra := lipgloss.Color("#2A2A2A")
-
 	for _, linea := range lineas {
 		if strings.TrimSpace(linea) == "" {
 			continue
 		}
-
-		runas := []rune(linea)
-		for j, R := range runas {
-			if R != ' ' {
-
-				progreso := float64(j) / float64(len(runas))
-				var color lipgloss.Color
-				if progreso < 0.65 { 
-					color = verdeShopify
-				} else {
-					color = blancoShopify
-				}
-
-				estilo := lipgloss.NewStyle().Foreground(color).Bold(true)
-				banner.WriteString(estilo.Render(string(R)))
-			} else {
-				if j > 0 && runas[j-1] != ' ' {
-					estiloSombra := lipgloss.NewStyle().Foreground(colorSombra)
-					banner.WriteString(estiloSombra.Render("░"))
-				} else {
-					banner.WriteRune(' ')
-				}
-			}
-		}
+		banner.WriteString(verdeShopify.Render(linea))
 		banner.WriteString("\n")
 	}
 	return banner.String()
@@ -107,21 +36,21 @@ func renderBanner() string {
 func renderMenuConAtajos(items []itemMenu, selectedIndex int, titulo string) string {
 	var b strings.Builder
 
-	b.WriteString(estiloTitulo.Render(titulo))
+	b.WriteString(styles.Titulo.Render(titulo))
 	b.WriteString("\n\n")
 
 	for i, item := range items {
 
-		atajo := estiloAtajo.Render("[" + strings.ToUpper(item.atajo) + "]")
+		atajo := styles.Atajo.Render("[" + strings.ToUpper(item.atajo) + "]")
 
 		var itemTitulo string
 		if i == selectedIndex {
-			itemTitulo = estiloItemSeleccionado.Render(item.titulo)
+			itemTitulo = styles.ItemSeleccionado.Render(item.titulo)
 		} else {
-			itemTitulo = estiloItemNormal.Render(item.titulo)
+			itemTitulo = styles.ItemNormal.Render(item.titulo)
 		}
 
-		desc := estiloDesc.Render(item.desc)
+		desc := styles.Desc.Render(item.desc)
 
 		cursor := "  "
 		if i == selectedIndex {
@@ -135,35 +64,37 @@ func renderMenuConAtajos(items []itemMenu, selectedIndex int, titulo string) str
 	return b.String()
 }
 
-func renderListaTiendas(tiendas []Tienda, selectedIndex int, titulo string) string {
+func renderListaTiendas(tiendas []Tienda, selectedIndex int, titulo string, mgr interface {
+	TieneServidorActivo(string) bool
+}) string {
 	var b strings.Builder
 
-	b.WriteString(estiloTitulo.Render(titulo))
+	b.WriteString(styles.Titulo.Render(titulo))
 	b.WriteString("\n\n")
 
 	for i, tienda := range tiendas {
 
-		num := estiloAtajo.Render(fmt.Sprintf("[%d]", i+1))
+		num := styles.Atajo.Render(fmt.Sprintf("[%d]", i+1))
 
 		var nombre string
-		tieneServidor := ObtenerGestor().TieneServidorActivo(tienda.Nombre)
+		tieneServidor := mgr.TieneServidorActivo(tienda.Nombre)
 		if tieneServidor {
-			nombre = Icons.ServerOn + " " + tienda.Nombre
+			nombre = icons.Icons.ServerOn + " " + tienda.Nombre
 		} else {
 			nombre = tienda.Nombre
 		}
 
 		if i == selectedIndex {
-			nombre = estiloItemSeleccionado.Render(nombre)
+			nombre = styles.ItemSeleccionado.Render(nombre)
 		} else {
-			nombre = estiloItemNormal.Render(nombre)
+			nombre = styles.ItemNormal.Render(nombre)
 		}
 
-		metodo := Icons.Download + " pull"
+		metodo := icons.Icons.Download + " pull"
 		if tienda.Metodo == MetodoGitClone {
-			metodo = Icons.Git + " git"
+			metodo = icons.Icons.Git + " git"
 		}
-		desc := estiloDesc.Render(tienda.URL + " [" + metodo + "]")
+		desc := styles.Desc.Render(tienda.URL + " [" + metodo + "]")
 
 		cursor := "  "
 		if i == selectedIndex {
@@ -221,7 +152,7 @@ func (m Model) vistaMenu() string {
 	}
 
 	banner := renderBanner()
-	menu := renderMenuConAtajos(items, m.lista.Index(), Icons.App+" Configuración")
+	menu := renderMenuConAtajos(items, m.lista.Index(), icons.Icons.App+" Configuración")
 
 	s := banner + "\n" + menu
 
@@ -229,24 +160,24 @@ func (m Model) vistaMenu() string {
 		estiloAviso := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD700")).Bold(true)
 		estiloVersion := lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFFF"))
 		estiloComando := lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF00"))
-		s += "\n\n" + estiloAviso.Render("⚡ Nueva versión disponible: ") + estiloVersion.Render(m.versionNueva) + estiloAviso.Render(" (actual: "+Version+")")
+		s += "\n\n" + estiloAviso.Render("Nueva version disponible: ") + estiloVersion.Render(m.versionNueva) + estiloAviso.Render(" (actual: "+version.Version+")")
 		s += "\n" + estiloAviso.Render("📦 Actualiza: ") + estiloComando.Render("npm update -g shopify-cli-tui")
 	}
 
 	if m.mensaje != "" {
 		s += "\n"
-		if strings.HasPrefix(m.mensaje, "✅") || strings.HasPrefix(m.mensaje, Icons.Success) {
-			s += estiloExito.Render(m.mensaje)
+		if strings.HasPrefix(m.mensaje, "âœ…") || strings.HasPrefix(m.mensaje, icons.Icons.Success) {
+			s += styles.Exito.Render(m.mensaje)
 		} else {
-			s += estiloError.Render(m.mensaje)
+			s += styles.Error.Render(m.mensaje)
 		}
 	}
 
-	servidoresActivos := ObtenerGestor().ContarActivos()
-	s += "\n" + estiloAyuda.Render(
+	servidoresActivos := m.serverMgr.ContarActivos()
+	s += "\n" + styles.Ayuda.Render(
 		fmt.Sprintf("Tiendas: %d | Servidores: %d", len(m.tiendas), servidoresActivos),
 	)
-	s += "\n" + estiloAyuda.Render("[A/T/D/V] j/k l/enter: seleccionar | Ctrl+Q: salir")
+	s += "\n" + styles.Ayuda.Render("[A/T/D/V] j/k l/enter: seleccionar | Ctrl+Q: salir")
 
 	return s
 }
@@ -254,52 +185,52 @@ func (m Model) vistaMenu() string {
 func (m Model) vistaAgregarTienda() string {
 	var b strings.Builder
 
-	b.WriteString(estiloTitulo.Render("➕ Agregar Nueva Tienda"))
+	b.WriteString(styles.Titulo.Render("âž• Agregar Nueva Tienda"))
 	b.WriteString("\n\n")
 
-	b.WriteString(estiloInfo.Render("Paso 1 de 2: Información básica"))
+	b.WriteString(styles.Info.Render("Paso 1 de 2: Información básica"))
 	b.WriteString("\n\n")
 
 	if m.cursorInput == 0 {
-		b.WriteString(estiloInputActivo.Render("> Nombre de la tienda:"))
+		b.WriteString(styles.InputActivo.Render("> Nombre de la tienda:"))
 	} else {
-		b.WriteString(estiloLabel.Render("  Nombre de la tienda:"))
+		b.WriteString(styles.Label.Render("  Nombre de la tienda:"))
 	}
 	b.WriteString("\n")
 	b.WriteString("  " + m.inputNombre.View())
 	b.WriteString("\n")
-	b.WriteString(estiloAyuda.Render("    Un nombre para identificar la tienda"))
+	b.WriteString(styles.Ayuda.Render("    Un nombre para identificar la tienda"))
 	b.WriteString("\n\n")
 
 	if m.cursorInput == 1 {
-		b.WriteString(estiloInputActivo.Render("> URL de Shopify:"))
+		b.WriteString(styles.InputActivo.Render("> URL de Shopify:"))
 	} else {
-		b.WriteString(estiloLabel.Render("  URL de Shopify:"))
+		b.WriteString(styles.Label.Render("  URL de Shopify:"))
 	}
 	b.WriteString("\n")
 	b.WriteString("  " + m.inputURL.View() + lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFFF")).Render(".myshopify.com"))
 	b.WriteString("\n\n")
 
 	if m.mensaje != "" {
-		b.WriteString(estiloError.Render(m.mensaje))
+		b.WriteString(styles.Error.Render(m.mensaje))
 		b.WriteString("\n\n")
 	}
 
-	b.WriteString(estiloAyuda.Render("tab: cambiar campo • enter: continuar • esc: cancelar"))
+	b.WriteString(styles.Ayuda.Render("tab: cambiar campo â€¢ enter: continuar â€¢ esc: cancelar"))
 
-	return estiloContenedor.Render(b.String())
+	return styles.Contenedor.Render(b.String())
 }
 
 func (m Model) vistaSeleccionarMetodo() string {
 	var b strings.Builder
 
-	b.WriteString(estiloTitulo.Render(Icons.Download + " Método de descarga"))
+	b.WriteString(styles.Titulo.Render(icons.Icons.Download + " Método de descarga"))
 	b.WriteString("\n\n")
 
-	b.WriteString(estiloLabel.Render("Tienda: "))
+	b.WriteString(styles.Label.Render("Tienda: "))
 	b.WriteString(m.tiendaTemporal.Nombre)
 	b.WriteString("\n")
-	b.WriteString(estiloLabel.Render("URL: "))
+	b.WriteString(styles.Label.Render("URL: "))
 	b.WriteString(m.tiendaTemporal.URL)
 	b.WriteString("\n\n")
 
@@ -314,11 +245,11 @@ func (m Model) vistaSeleccionarMetodo() string {
 	b.WriteString("\n")
 
 	if m.mensaje != "" {
-		b.WriteString(estiloError.Render(m.mensaje))
+		b.WriteString(styles.Error.Render(m.mensaje))
 		b.WriteString("\n")
 	}
 
-	b.WriteString(estiloAyuda.Render("[S]hopify Pull | [G]it Clone | l/enter | q: volver"))
+	b.WriteString(styles.Ayuda.Render("[S]hopify Pull | [G]it Clone | l/enter | q: volver"))
 
 	return b.String()
 }
@@ -326,65 +257,65 @@ func (m Model) vistaSeleccionarMetodo() string {
 func (m Model) vistaInputGit() string {
 	var b strings.Builder
 
-	b.WriteString(estiloTitulo.Render("🔗 Clonar desde Git"))
+	b.WriteString(styles.Titulo.Render(icons.Icons.Git + " Clonar desde Git"))
 	b.WriteString("\n\n")
 
-	b.WriteString(estiloLabel.Render("Tienda: "))
+	b.WriteString(styles.Label.Render("Tienda: "))
 	b.WriteString(m.tiendaTemporal.Nombre)
 	b.WriteString("\n\n")
 
-	b.WriteString(estiloInputActivo.Render("> URL del repositorio:"))
+	b.WriteString(styles.InputActivo.Render("> URL del repositorio:"))
 	b.WriteString("\n")
 	b.WriteString("  " + m.inputGit.View())
 	b.WriteString("\n\n")
 
-	b.WriteString(estiloAyuda.Render("Ejemplos:"))
+	b.WriteString(styles.Ayuda.Render("Ejemplos:"))
 	b.WriteString("\n")
-	b.WriteString(estiloAyuda.Render("  SSH:   git@github.com:usuario/tema.git"))
+	b.WriteString(styles.Ayuda.Render("  SSH:   git@github.com:usuario/tema.git"))
 	b.WriteString("\n")
-	b.WriteString(estiloAyuda.Render("  HTTPS: https://github.com/usuario/tema.git"))
+	b.WriteString(styles.Ayuda.Render("  HTTPS: https://github.com/usuario/tema.git"))
 	b.WriteString("\n\n")
 
 	if m.mensaje != "" {
-		b.WriteString(estiloError.Render(m.mensaje))
+		b.WriteString(styles.Error.Render(m.mensaje))
 		b.WriteString("\n\n")
 	}
 
-	b.WriteString(estiloAyuda.Render("enter: clonar | q: volver"))
+	b.WriteString(styles.Ayuda.Render("enter: clonar | q: volver"))
 
-	return estiloContenedor.Render(b.String())
+	return styles.Contenedor.Render(b.String())
 }
 
 func (m Model) vistaSeleccionarTienda() string {
 	if len(m.tiendas) == 0 {
 		var b strings.Builder
-		b.WriteString(estiloTitulo.Render("🚀 Ejecutar Theme Dev"))
+		b.WriteString(styles.Titulo.Render("ðŸš€ Ejecutar Theme Dev"))
 		b.WriteString("\n\n")
-		b.WriteString(estiloError.Render("No hay tiendas guardadas."))
+		b.WriteString(styles.Error.Render("No hay tiendas guardadas."))
 		b.WriteString("\n")
-		b.WriteString(estiloAyuda.Render("Primero agrega una tienda desde el menú principal."))
+		b.WriteString(styles.Ayuda.Render("Primero agrega una tienda desde el menú principal."))
 		b.WriteString("\n\n")
-		b.WriteString(estiloAyuda.Render("q: volver"))
-		return estiloContenedor.Render(b.String())
+		b.WriteString(styles.Ayuda.Render("q: volver"))
+		return styles.Contenedor.Render(b.String())
 	}
 
 	// Usamos la m.lista.View() directamente para tener buscador y paginación
-	return estiloContenedor.Render(m.lista.View())
+	return styles.Contenedor.Render(m.lista.View())
 }
 
 func (m Model) vistaSeleccionarModo() string {
 	var b strings.Builder
 
-	gestor := ObtenerGestor()
+	gestor := m.serverMgr
 	tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
 
 	if tieneServidor {
-		b.WriteString(estiloExito.Render("● Servidor activo"))
+		b.WriteString(styles.Exito.Render(icons.Icons.ServerOn + " Servidor activo"))
 		b.WriteString("\n")
 
 		for _, s := range gestor.ObtenerServidoresActivos() {
 			if s.Tienda.Nombre == m.tiendaParaDev.Nombre {
-				b.WriteString(estiloInfo.Render("  " + s.URL))
+				b.WriteString(styles.Info.Render("  " + s.URL))
 				b.WriteString("\n")
 				break
 			}
@@ -402,22 +333,22 @@ func (m Model) vistaSeleccionarModo() string {
 	titulo := m.tiendaParaDev.Nombre
 	b.WriteString(renderMenuConAtajos(items, m.lista.Index(), titulo))
 
-	b.WriteString(estiloInfo.Render("📁 " + m.tiendaParaDev.Ruta))
+	b.WriteString(styles.Info.Render(icons.Icons.Folder + " " + m.tiendaParaDev.Ruta))
 	b.WriteString("\n")
 
 	if m.mensaje != "" {
-		if strings.HasPrefix(m.mensaje, "✅") || strings.HasPrefix(m.mensaje, Icons.Success) {
-			b.WriteString(estiloExito.Render(m.mensaje))
+		if strings.HasPrefix(m.mensaje, "âœ…") || strings.HasPrefix(m.mensaje, icons.Icons.Success) {
+			b.WriteString(styles.Exito.Render(m.mensaje))
 		} else {
-			b.WriteString(estiloError.Render(m.mensaje))
+			b.WriteString(styles.Error.Render(m.mensaje))
 		}
 		b.WriteString("\n")
 	}
 
 	if tieneServidor {
-		b.WriteString(estiloAyuda.Render("[L]ogs [S]top [P]ull p[U]sh [E]ditor [T]erminal | q: volver"))
+		b.WriteString(styles.Ayuda.Render("[L]ogs [S]top [P]ull p[U]sh [E]ditor [T]erminal | q: volver"))
 	} else {
-		b.WriteString(estiloAyuda.Render("[I]niciar [P]ull p[U]sh [E]ditor [T]erminal | q: volver"))
+		b.WriteString(styles.Ayuda.Render("[I]niciar [P]ull p[U]sh [E]ditor [T]erminal | q: volver"))
 	}
 
 	return b.String()
@@ -426,24 +357,24 @@ func (m Model) vistaSeleccionarModo() string {
 func (m Model) vistaLogs() string {
 	var b strings.Builder
 
-	servidor := ObtenerGestor().ObtenerServidor(m.tiendaParaDev.Nombre)
+	servidor := m.serverMgr.ObtenerServidor(m.tiendaParaDev.Nombre)
 
 	if servidor != nil && servidor.Activo {
-		b.WriteString(estiloExito.Render(Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " - Servidor activo"))
+		b.WriteString(styles.Exito.Render(icons.Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " - Servidor activo"))
 		b.WriteString("\n")
-		b.WriteString(estiloInfo.Render("   " + servidor.URL))
+		b.WriteString(styles.Info.Render("   " + servidor.URL))
 	} else {
-		b.WriteString(estiloError.Render(Icons.Stop + " " + m.tiendaParaDev.Nombre + " - Servidor detenido"))
+		b.WriteString(styles.Error.Render(icons.Icons.Stop + " " + m.tiendaParaDev.Nombre + " - Servidor detenido"))
 	}
 	b.WriteString("\n")
-	b.WriteString(strings.Repeat("─", 60))
+	b.WriteString(strings.Repeat("-", 60))
 	b.WriteString("\n\n")
 
 	if servidor != nil {
 		logs := servidor.ObtenerLogs()
 
 		if len(logs) == 0 {
-			b.WriteString(estiloAyuda.Render("Esperando logs del servidor..."))
+			b.WriteString(styles.Ayuda.Render("Esperando logs del servidor..."))
 			b.WriteString("\n")
 		} else {
 
@@ -469,9 +400,9 @@ func (m Model) vistaLogs() string {
 				linea := logs[i]
 
 				if strings.Contains(linea, "error") || strings.Contains(linea, "Error") {
-					b.WriteString(estiloError.Render(linea))
+					b.WriteString(styles.Error.Render(linea))
 				} else if strings.Contains(linea, "http://") || strings.Contains(linea, "https://") {
-					b.WriteString(estiloExito.Render(linea))
+					b.WriteString(styles.Exito.Render(linea))
 				} else {
 					b.WriteString(linea)
 				}
@@ -484,34 +415,34 @@ func (m Model) vistaLogs() string {
 				if len(logs)-lineasVisibles > 0 {
 					porcentaje = (m.logsScroll * 100) / (len(logs) - lineasVisibles)
 				}
-				b.WriteString(estiloAyuda.Render(fmt.Sprintf("Líneas %d-%d de %d (%d%%)", inicio+1, fin, len(logs), porcentaje)))
+				b.WriteString(styles.Ayuda.Render(fmt.Sprintf("Líneas %d-%d de %d (%d%%)", inicio+1, fin, len(logs), porcentaje)))
 			}
 		}
 	} else {
-		b.WriteString(estiloError.Render("No hay servidor activo"))
+		b.WriteString(styles.Error.Render("No hay servidor activo"))
 	}
 
 	b.WriteString("\n\n")
-	b.WriteString(strings.Repeat("─", 60))
+	b.WriteString(strings.Repeat("-", 60))
 	b.WriteString("\n")
 
 	if m.mensaje != "" {
-		if strings.HasPrefix(m.mensaje, "✅") || strings.HasPrefix(m.mensaje, "🛑") {
-			b.WriteString(estiloExito.Render(m.mensaje))
+		if strings.HasPrefix(m.mensaje, "âœ…") || strings.HasPrefix(m.mensaje, "ðŸ›‘") {
+			b.WriteString(styles.Exito.Render(m.mensaje))
 		} else {
-			b.WriteString(estiloError.Render(m.mensaje))
+			b.WriteString(styles.Error.Render(m.mensaje))
 		}
 		b.WriteString("\n")
 	}
 
 	if m.modoSeleccion {
-		b.WriteString(estiloExito.Render("✓ MODO SELECCIÓN ACTIVO - Selecciona texto con el mouse"))
+		b.WriteString(styles.Exito.Render("MODO SELECCION ACTIVO - Selecciona texto con el mouse"))
 		b.WriteString("\n")
 	}
 
-	b.WriteString(estiloInfo.Render(Icons.Terminal + " MODO INTERACTIVO - Las teclas se envían a Shopify CLI"))
+	b.WriteString(styles.Info.Render(icons.Icons.Terminal + " MODO INTERACTIVO - Las teclas se envían a Shopify CLI"))
 	b.WriteString("\n")
-	b.WriteString(estiloAyuda.Render("space/m: menú | j/k: scroll | v: seleccionar | Ctrl+Q: volver"))
+	b.WriteString(styles.Ayuda.Render("space/m: menú | j/k: scroll | v: seleccionar | Ctrl+Q: volver"))
 
 	return b.String()
 }
@@ -519,18 +450,18 @@ func (m Model) vistaLogs() string {
 func (m Model) vistaServidores() string {
 	var b strings.Builder
 
-	b.WriteString(estiloTitulo.Render(Icons.Logs + " Servidores Activos"))
+	b.WriteString(styles.Titulo.Render(icons.Icons.Logs + " Servidores Activos"))
 	b.WriteString("\n\n")
 
-	servidores := ObtenerGestor().ObtenerServidoresActivos()
+	servidores := m.serverMgr.ObtenerServidoresActivos()
 
 	if len(servidores) == 0 {
-		b.WriteString(estiloAyuda.Render("No hay servidores corriendo."))
+		b.WriteString(styles.Ayuda.Render("No hay servidores corriendo."))
 		b.WriteString("\n")
-		b.WriteString(estiloAyuda.Render("Inicia uno desde '" + Icons.Rocket + " Iniciar servidor'"))
+		b.WriteString(styles.Ayuda.Render("Inicia uno desde '" + icons.Icons.Rocket + " Iniciar servidor'"))
 		b.WriteString("\n\n")
-		b.WriteString(estiloAyuda.Render("q: volver"))
-		return estiloContenedor.Render(b.String())
+		b.WriteString(styles.Ayuda.Render("q: volver"))
+		return styles.Contenedor.Render(b.String())
 	}
 
 	for i, servidor := range servidores {
@@ -538,30 +469,30 @@ func (m Model) vistaServidores() string {
 		duracion := formatearDuracion(servidor.Iniciado)
 
 		if i == m.lista.Index() {
-			b.WriteString(estiloInputActivo.Render("> "))
+			b.WriteString(styles.InputActivo.Render("> "))
 		} else {
 			b.WriteString("  ")
 		}
 
-		b.WriteString(estiloLabel.Render(servidor.Tienda.Nombre))
+		b.WriteString(styles.Label.Render(servidor.Tienda.Nombre))
 		b.WriteString("\n")
-		b.WriteString(fmt.Sprintf("    🌐 %s\n", servidor.URL))
-		b.WriteString(fmt.Sprintf("    📍 Puerto: %d | ⏱️ Activo: %s\n", servidor.Puerto, duracion))
+		b.WriteString(fmt.Sprintf("    %s\n", servidor.URL))
+		b.WriteString(fmt.Sprintf("    Puerto: %d | Activo: %s\n", servidor.Puerto, duracion))
 		b.WriteString("\n")
 	}
 
 	if m.mensaje != "" {
-		if strings.HasPrefix(m.mensaje, "✅") {
-			b.WriteString(estiloExito.Render(m.mensaje))
+		if strings.HasPrefix(m.mensaje, "âœ…") {
+			b.WriteString(styles.Exito.Render(m.mensaje))
 		} else {
-			b.WriteString(estiloError.Render(m.mensaje))
+			b.WriteString(styles.Error.Render(m.mensaje))
 		}
 		b.WriteString("\n")
 	}
 
-	b.WriteString(estiloAyuda.Render("s: detener | S: detener todos | q: volver"))
+	b.WriteString(styles.Ayuda.Render("s: detener | S: detener todos | q: volver"))
 
-	return estiloContenedor.Render(b.String())
+	return styles.Contenedor.Render(b.String())
 }
 
 func formatearDuracion(inicio time.Time) string {
@@ -575,70 +506,59 @@ func formatearDuracion(inicio time.Time) string {
 	return fmt.Sprintf("%dh %dm", int(duracion.Hours()), int(duracion.Minutes())%60)
 }
 
-var estiloPopup = lipgloss.NewStyle().
-	Border(lipgloss.RoundedBorder()).
-	BorderForeground(lipgloss.Color("#7D56F4")).
-	Padding(1, 2).
-	Background(lipgloss.Color("#1a1a2e"))
-
-var estiloPopupTitulo = lipgloss.NewStyle().
-	Bold(true).
-	Foreground(lipgloss.Color("#7D56F4")).
-	MarginBottom(1)
-
 func (m Model) vistaPopup() string {
-	gestor := ObtenerGestor()
+	gestor := m.serverMgr
 	tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
 
 	var opciones []itemMenu
 	if tieneServidor {
 		opciones = []itemMenu{
-			{titulo: Icons.Stop + " Detener", desc: "Parar servidor", atajo: "s"},
-			{titulo: Icons.Download + " Pull", desc: "Bajar cambios", atajo: "p"},
-			{titulo: Icons.Upload + " Push", desc: "Subir cambios", atajo: "u"},
-			{titulo: Icons.Editor + " Editor", desc: "Abrir VS Code", atajo: "e"},
-			{titulo: Icons.Terminal + " Terminal", desc: "Abrir terminal", atajo: "t"},
+			{titulo: icons.Icons.Stop + " Detener", desc: "Parar servidor", atajo: "s"},
+			{titulo: icons.Icons.Download + " Pull", desc: "Bajar cambios", atajo: "p"},
+			{titulo: icons.Icons.Upload + " Push", desc: "Subir cambios", atajo: "u"},
+			{titulo: icons.Icons.Editor + " Editor", desc: "Abrir VS Code", atajo: "e"},
+			{titulo: icons.Icons.Terminal + " Terminal", desc: "Abrir terminal", atajo: "t"},
 		}
 	} else {
 		opciones = []itemMenu{
-			{titulo: Icons.Download + " Pull", desc: "Bajar cambios", atajo: "p"},
-			{titulo: Icons.Upload + " Push", desc: "Subir cambios", atajo: "u"},
-			{titulo: Icons.Editor + " Editor", desc: "Abrir VS Code", atajo: "e"},
-			{titulo: Icons.Terminal + " Terminal", desc: "Abrir terminal", atajo: "t"},
+			{titulo: icons.Icons.Download + " Pull", desc: "Bajar cambios", atajo: "p"},
+			{titulo: icons.Icons.Upload + " Push", desc: "Subir cambios", atajo: "u"},
+			{titulo: icons.Icons.Editor + " Editor", desc: "Abrir VS Code", atajo: "e"},
+			{titulo: icons.Icons.Terminal + " Terminal", desc: "Abrir terminal", atajo: "t"},
 		}
 	}
 
 	var popupContent strings.Builder
-	popupContent.WriteString(estiloPopupTitulo.Render(Icons.Rocket + " Acciones"))
+	popupContent.WriteString(styles.PopupTitulo.Render(icons.Icons.Rocket + " Acciones"))
 	popupContent.WriteString("\n\n")
 
 	for i, op := range opciones {
-		atajo := estiloAtajo.Render("[" + strings.ToUpper(op.atajo) + "]")
+		atajo := styles.Atajo.Render("[" + strings.ToUpper(op.atajo) + "]")
 		cursor := "  "
 		if i == m.popupIndex {
 			cursor = "> "
-			popupContent.WriteString(cursor + atajo + " " + estiloItemSeleccionado.Render(op.titulo) + "\n")
+			popupContent.WriteString(cursor + atajo + " " + styles.ItemSeleccionado.Render(op.titulo) + "\n")
 		} else {
-			popupContent.WriteString(cursor + atajo + " " + estiloItemNormal.Render(op.titulo) + "\n")
+			popupContent.WriteString(cursor + atajo + " " + styles.ItemNormal.Render(op.titulo) + "\n")
 		}
 	}
 
 	popupContent.WriteString("\n")
-	popupContent.WriteString(estiloAyuda.Render("j/k navegar | l/enter ejecutar | space cerrar"))
+	popupContent.WriteString(styles.Ayuda.Render("j/k navegar | l/enter ejecutar | space cerrar"))
 
-	popup := estiloPopup.Render(popupContent.String())
+	popup := styles.Popup.Render(popupContent.String())
 
 	servidor := gestor.ObtenerServidor(m.tiendaParaDev.Nombre)
 	var header strings.Builder
 	if servidor != nil && servidor.Activo {
-		header.WriteString(estiloExito.Render(Icons.ServerOn + " " + m.tiendaParaDev.Nombre))
+		header.WriteString(styles.Exito.Render(icons.Icons.ServerOn + " " + m.tiendaParaDev.Nombre))
 		header.WriteString(" - ")
-		header.WriteString(estiloInfo.Render(servidor.URL))
+		header.WriteString(styles.Info.Render(servidor.URL))
 	} else {
-		header.WriteString(estiloError.Render(Icons.Stop + " " + m.tiendaParaDev.Nombre + " - Detenido"))
+		header.WriteString(styles.Error.Render(icons.Icons.Stop + " " + m.tiendaParaDev.Nombre + " - Detenido"))
 	}
 	header.WriteString("\n")
-	header.WriteString(strings.Repeat("─", 50))
+	header.WriteString(strings.Repeat("-", 50))
 	header.WriteString("\n\n")
 
 	popupAncho := lipgloss.Width(popup)
@@ -660,24 +580,24 @@ func (m Model) vistaPopup() string {
 func (m Model) vistaLogsBase() string {
 	var b strings.Builder
 
-	servidor := ObtenerGestor().ObtenerServidor(m.tiendaParaDev.Nombre)
+	servidor := m.serverMgr.ObtenerServidor(m.tiendaParaDev.Nombre)
 
 	if servidor != nil && servidor.Activo {
-		b.WriteString(estiloExito.Render(Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " - Servidor activo"))
+		b.WriteString(styles.Exito.Render(icons.Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " - Servidor activo"))
 		b.WriteString("\n")
-		b.WriteString(estiloInfo.Render("   " + servidor.URL))
+		b.WriteString(styles.Info.Render("   " + servidor.URL))
 	} else {
-		b.WriteString(estiloError.Render(Icons.Stop + " " + m.tiendaParaDev.Nombre + " - Servidor detenido"))
+		b.WriteString(styles.Error.Render(icons.Icons.Stop + " " + m.tiendaParaDev.Nombre + " - Servidor detenido"))
 	}
 	b.WriteString("\n")
-	b.WriteString(strings.Repeat("─", 60))
+	b.WriteString(strings.Repeat("-", 60))
 	b.WriteString("\n\n")
 
 	if servidor != nil {
 		logs := servidor.ObtenerLogs()
 
 		if len(logs) == 0 {
-			b.WriteString(estiloAyuda.Render("Esperando logs del servidor..."))
+			b.WriteString(styles.Ayuda.Render("Esperando logs del servidor..."))
 			b.WriteString("\n")
 		} else {
 			lineasVisibles := 15
@@ -701,9 +621,9 @@ func (m Model) vistaLogsBase() string {
 			for i := inicio; i < fin; i++ {
 				linea := logs[i]
 				if strings.Contains(linea, "error") || strings.Contains(linea, "Error") {
-					b.WriteString(estiloError.Render(linea))
+					b.WriteString(styles.Error.Render(linea))
 				} else if strings.Contains(linea, "http://") || strings.Contains(linea, "https://") {
-					b.WriteString(estiloExito.Render(linea))
+					b.WriteString(styles.Exito.Render(linea))
 				} else {
 					b.WriteString(linea)
 				}
@@ -711,7 +631,7 @@ func (m Model) vistaLogsBase() string {
 			}
 		}
 	} else {
-		b.WriteString(estiloError.Render("No hay servidor activo"))
+		b.WriteString(styles.Error.Render("No hay servidor activo"))
 	}
 
 	return b.String()

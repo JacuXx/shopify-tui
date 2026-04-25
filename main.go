@@ -5,11 +5,13 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/JacuXx/shopify-cli/internal/ui/icons"
 )
 
 func main() {
 
-	InitIcons()
+	icons.InitIcons()
 
 	p := tea.NewProgram(
 		modeloInicial(),

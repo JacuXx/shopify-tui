@@ -1,4 +1,4 @@
-package main
+package icons
 
 import (
 	"os"
@@ -41,7 +41,6 @@ type IconSet struct {
 }
 
 var NerdIcons = IconSet{
-
 	Success: "",
 	Error:   "",
 	Warning: "",
@@ -77,7 +76,6 @@ var NerdIcons = IconSet{
 }
 
 var ASCIIIcons = IconSet{
-
 	Success: "[OK]",
 	Error:   "[X]",
 	Warning: "[!]",
@@ -90,7 +88,7 @@ var ASCIIIcons = IconSet{
 
 	Store:     "[S]",
 	Server:    "[#]",
-	ServerOn:  "(*)  ",
+	ServerOn:  "(*)",
 	ServerOff: "( )",
 	Logs:      "[=]",
 	Stop:      "[X]",
@@ -112,14 +110,14 @@ var ASCIIIcons = IconSet{
 	App: ">>",
 }
 
+// Icons es el conjunto activo. Se inicializa con InitIcons en main.
 var Icons = ASCIIIcons
 
+// DetectNerdFont detecta si la terminal soporta Nerd Font.
 func DetectNerdFont() bool {
-
 	if env := os.Getenv("SHOPIFY_TUI_ICONS"); env != "" {
 		return strings.ToLower(env) == "nerd" || strings.ToLower(env) == "true"
 	}
-
 	if env := os.Getenv("SHOPIFY_TUI_ASCII"); env != "" {
 		return false
 	}
@@ -131,17 +129,16 @@ func DetectNerdFont() bool {
 		"kitty", "alacritty", "wezterm", "iterm", "iterm2",
 		"hyper", "warp", "ghostty",
 	}
-
 	for _, t := range nerdTerminals {
 		if strings.Contains(strings.ToLower(term), t) ||
 			strings.Contains(strings.ToLower(termProgram), t) {
 			return true
 		}
 	}
-
 	return true
 }
 
+// InitIcons selecciona el conjunto de iconos según la terminal detectada.
 func InitIcons() {
 	if DetectNerdFont() {
 		Icons = NerdIcons
@@ -150,18 +147,7 @@ func InitIcons() {
 	}
 }
 
-func IconSuccess(msg string) string {
-	return Icons.Success + " " + msg
-}
-
-func IconError(msg string) string {
-	return Icons.Error + " " + msg
-}
-
-func IconWarning(msg string) string {
-	return Icons.Warning + " " + msg
-}
-
-func IconInfo(msg string) string {
-	return Icons.Info + " " + msg
-}
+func IconSuccess(msg string) string { return Icons.Success + " " + msg }
+func IconError(msg string) string   { return Icons.Error + " " + msg }
+func IconWarning(msg string) string { return Icons.Warning + " " + msg }
+func IconInfo(msg string) string    { return Icons.Info + " " + msg }

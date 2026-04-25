@@ -7,6 +7,10 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/JacuXx/shopify-cli/internal/commands"
+	"github.com/JacuXx/shopify-cli/internal/domain"
+	"github.com/JacuXx/shopify-cli/internal/ui/icons"
 )
 
 type tickMsg time.Time
@@ -36,7 +40,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+q":
 
-			ObtenerGestor().DetenerTodos()
+			m.serverMgr.DetenerTodos()
 			return m, tea.Quit
 		case "q", "esc":
 
@@ -56,7 +60,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.mensaje = ""
 
 				items := crearListaMetodos()
-				m.lista = crearLista(items, Icons.Download+" Método de descarga", m.ancho, m.alto)
+				m.lista = crearLista(items, icons.Icons.Download+" Método de descarga", m.ancho, m.alto)
 			case VistaSeleccionarTienda:
 				m.vista = VistaMenu
 				m.mensaje = ""
@@ -64,17 +68,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case VistaSeleccionarModo:
 				m.vista = VistaSeleccionarTienda
 				m.mensaje = ""
-				items := crearListaTiendas(m.tiendas)
-				m.lista = crearLista(items, Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
+				items := crearListaTiendas(m.tiendas, m.serverMgr)
+				m.lista = crearLista(items, icons.Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
 			case VistaLogs:
 
 				m.vista = VistaSeleccionarModo
-				gestor := ObtenerGestor()
-				tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
+				tieneServidor := m.serverMgr.TieneServidorActivo(m.tiendaParaDev.Nombre)
 				items := crearListaModos(m.tiendaParaDev, tieneServidor)
-				titulo := Icons.Server + " " + m.tiendaParaDev.Nombre
+				titulo := icons.Icons.Server + " " + m.tiendaParaDev.Nombre
 				if tieneServidor {
-					titulo = Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " (servidor activo)"
+					titulo = icons.Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " (servidor activo)"
 				}
 				m.lista = crearLista(items, titulo, m.ancho, m.alto)
 				m.mensaje = ""
@@ -86,30 +89,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-	case comandoTerminadoMsg:
-		m.mensaje = msg.resultado
+	case commands.ComandoTerminadoMsg:
+		m.mensaje = msg.Resultado
 
-		if msg.tienda != nil {
-			m.tiendas = append(m.tiendas, *msg.tienda)
-			guardarTiendas(m.tiendas)
-			m.mensaje = IconSuccess("Tienda '" + msg.tienda.Nombre + "' agregada correctamente")
-			m.vista = VistaMenu
+		if msg.Tienda != nil {
+			m.tiendas = append(m.tiendas, *msg.Tienda)
+			m.storeRepo.GuardarTiendas(m.tiendas)
+			m.mensaje = icons.IconSuccess("Tienda '" + msg.Tienda.Nombre + "' agregada correctamente")
+			m.vista = domain.VistaMenu
 			m.recrearMenuPrincipal()
 			return m, nil
 		}
 
-		if msg.volverAOpciones && m.tiendaParaDev.Nombre != "" {
-			m.vista = VistaLogs
+		if msg.VolverAOpciones && m.tiendaParaDev.Nombre != "" {
+			m.vista = domain.VistaLogs
 			m.logsScroll = 0
 			return m, tickCmd()
 		}
 
-		m.vista = VistaMenu
+		m.vista = domain.VistaMenu
 		m.recrearMenuPrincipal()
 		return m, nil
 
-	case errorMsg:
-		m.mensaje = IconError("Error: " + msg.err.Error())
+	case commands.ErrorMsg:
+		m.mensaje = icons.IconError("Error: " + msg.Err.Error())
 		return m, nil
 
 	case tickMsg:
@@ -151,7 +154,7 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch key {
 		case "a":
-			return m, ejecutarShopifyLogin()
+			return m, commands.EjecutarShopifyLogin()
 
 		case "t":
 			m.vista = VistaAgregarTienda
@@ -165,12 +168,12 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "d":
 			if len(m.tiendas) == 0 {
-				m.mensaje = IconWarning("No hay tiendas. Agrega una primero.")
+				m.mensaje = icons.IconWarning("No hay tiendas. Agrega una primero.")
 				return m, nil
 			}
 			m.vista = VistaSeleccionarTienda
-			items := crearListaTiendas(m.tiendas)
-			m.lista = crearLista(items, Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
+			items := crearListaTiendas(m.tiendas, m.serverMgr)
+			m.lista = crearLista(items, icons.Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
 			m.mensaje = ""
 			return m, nil
 
@@ -189,7 +192,7 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			switch {
 			case strings.Contains(titulo, "Iniciar sesión"):
-				return m, ejecutarShopifyLogin()
+				return m, commands.EjecutarShopifyLogin()
 
 			case strings.Contains(titulo, "Agregar tienda"):
 				m.vista = VistaAgregarTienda
@@ -203,12 +206,12 @@ func (m Model) updateMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case strings.Contains(titulo, "Desarrollo local"):
 				if len(m.tiendas) == 0 {
-					m.mensaje = IconWarning("No hay tiendas guardadas. Agrega una primero.")
+					m.mensaje = icons.IconWarning("No hay tiendas guardadas. Agrega una primero.")
 					return m, nil
 				}
 				m.vista = VistaSeleccionarTienda
-				items := crearListaTiendas(m.tiendas)
-				m.lista = crearLista(items, Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
+				items := crearListaTiendas(m.tiendas, m.serverMgr)
+				m.lista = crearLista(items, icons.Icons.Server+" Selecciona una tienda", m.ancho, m.alto)
 				m.mensaje = ""
 				return m, nil
 
@@ -258,7 +261,7 @@ func (m Model) updateAgregarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 			url := m.inputURL.Value()
 
 			if nombre == "" || url == "" {
-				m.mensaje = IconWarning("Por favor completa ambos campos")
+				m.mensaje = icons.IconWarning("Por favor completa ambos campos")
 				return m, nil
 			}
 
@@ -269,7 +272,7 @@ func (m Model) updateAgregarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.vista = VistaSeleccionarMetodo
 			items := crearListaMetodos()
-			m.lista = crearLista(items, Icons.Download+" Método de descarga", m.ancho, m.alto)
+			m.lista = crearLista(items, icons.Icons.Download+" Método de descarga", m.ancho, m.alto)
 			m.mensaje = ""
 			return m, nil
 		}
@@ -287,23 +290,23 @@ func (m Model) updateAgregarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) updateSeleccionarMetodo(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	usarShopifyPull := func() (tea.Model, tea.Cmd) {
-		directorio, err := crearDirectorioTienda(m.tiendaTemporal.Nombre)
+		directorio, err := m.storeRepo.CrearDirectorioTienda(m.tiendaTemporal.Nombre)
 		if err != nil {
-			m.mensaje = IconError("Error al crear directorio: " + err.Error())
+			m.mensaje = icons.IconError("Error al crear directorio: " + err.Error())
 			return m, nil
 		}
-		m.tiendaTemporal.Metodo = MetodoShopifyPull
+		m.tiendaTemporal.Metodo = domain.MetodoShopifyPull
 		m.tiendaTemporal.Ruta = directorio
-		return m, ejecutarDescargaConExec(m.tiendaTemporal, directorio)
+		return m, commands.EjecutarDescargaConExec(m.tiendaTemporal, directorio)
 	}
 
 	usarGitClone := func() (tea.Model, tea.Cmd) {
-		directorio, err := crearDirectorioTienda(m.tiendaTemporal.Nombre)
+		directorio, err := m.storeRepo.CrearDirectorioTienda(m.tiendaTemporal.Nombre)
 		if err != nil {
-			m.mensaje = IconError("Error al crear directorio: " + err.Error())
+			m.mensaje = icons.IconError("Error al crear directorio: " + err.Error())
 			return m, nil
 		}
-		m.tiendaTemporal.Metodo = MetodoGitClone
+		m.tiendaTemporal.Metodo = domain.MetodoGitClone
 		m.tiendaTemporal.Ruta = directorio
 		m.vista = VistaInputGit
 		m.inputGit.SetValue("")
@@ -349,12 +352,12 @@ func (m Model) updateInputGit(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter", "l":
 			gitURL := m.inputGit.Value()
 			if gitURL == "" {
-				m.mensaje = IconWarning("Por favor ingresa la URL del repositorio")
+				m.mensaje = icons.IconWarning("Por favor ingresa la URL del repositorio")
 				return m, nil
 			}
 
 			m.tiendaTemporal.GitURL = gitURL
-			return m, ejecutarDescargaConExec(m.tiendaTemporal, m.tiendaTemporal.Ruta)
+			return m, commands.EjecutarDescargaConExec(m.tiendaTemporal, m.tiendaTemporal.Ruta)
 		}
 	}
 
@@ -403,26 +406,26 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 					if rutaEliminada != "" {
 						if err := os.RemoveAll(rutaEliminada); err != nil {
-							m.mensaje = IconError("Error al eliminar archivos: " + err.Error())
+							m.mensaje = icons.IconError("Error al eliminar archivos: " + err.Error())
 							return m, nil
 						}
 					}
 
-					m.tiendas = eliminarTienda(m.tiendas, indiceReal)
+					m.tiendas = m.storeRepo.EliminarTienda(m.tiendas, indiceReal)
 
-					if err := guardarTiendas(m.tiendas); err != nil {
-						m.mensaje = IconError("Error al eliminar del registro: " + err.Error())
+					if err := m.storeRepo.GuardarTiendas(m.tiendas); err != nil {
+						m.mensaje = icons.IconError("Error al eliminar del registro: " + err.Error())
 					} else {
-						m.mensaje = Icons.Delete + " Tienda '" + nombreEliminada + "' eliminada por completo"
+						m.mensaje = icons.Icons.Delete + " Tienda '" + nombreEliminada + "' eliminada por completo"
 					}
 
 					if len(m.tiendas) == 0 {
 						m.recrearMenuPrincipal()
-						m.vista = VistaMenu
+						m.vista = domain.VistaMenu
 						return m, nil
 					}
 
-					items := crearListaTiendas(m.tiendas)
+					items := crearListaTiendas(m.tiendas, m.serverMgr)
 					m.lista.SetItems(items)
 				}
 			}
@@ -434,32 +437,31 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if item, ok := m.lista.SelectedItem().(itemTienda); ok {
 				tienda := item.tienda
 				
-				if !existeDirectorio(tienda.Ruta) {
-					m.mensaje = IconError("El directorio no existe: " + tienda.Ruta)
+				if !m.storeRepo.ExisteDirectorio(tienda.Ruta) {
+					m.mensaje = icons.IconError("El directorio no existe: " + tienda.Ruta)
 					return m, nil
 				}
 
 				m.tiendaParaDev = tienda
-				gestor := ObtenerGestor()
-				tieneServidor := gestor.TieneServidorActivo(tienda.Nombre)
+				tieneServidor := m.serverMgr.TieneServidorActivo(tienda.Nombre)
 
 				if tieneServidor {
-					m.vista = VistaLogs
+					m.vista = domain.VistaLogs
 					m.logsScroll = 0
 					m.mensaje = ""
 					return m, tickCmd()
 				}
 
-				servidor, err := gestor.IniciarServidor(tienda)
+				servidor, err := m.serverMgr.IniciarServidor(tienda)
 				if err != nil {
-					m.mensaje = IconError(err.Error())
-					m.vista = VistaLogs
+					m.mensaje = icons.IconError(err.Error())
+					m.vista = domain.VistaLogs
 					m.logsScroll = 0
 					return m, tickCmd()
 				}
 
-				m.mensaje = IconSuccess("Servidor iniciado en " + servidor.URL)
-				m.vista = VistaLogs
+				m.mensaje = icons.IconSuccess("Servidor iniciado en " + servidor.URL)
+				m.vista = domain.VistaLogs
 				m.logsScroll = 0
 				return m, tickCmd()
 			}
@@ -472,35 +474,34 @@ func (m Model) updateSeleccionarTienda(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
-	gestor := ObtenerGestor()
-	tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
+	tieneServidor := m.serverMgr.TieneServidorActivo(m.tiendaParaDev.Nombre)
 
 	iniciarServidor := func() (tea.Model, tea.Cmd) {
-		servidor, err := gestor.IniciarServidor(m.tiendaParaDev)
+		servidor, err := m.serverMgr.IniciarServidor(m.tiendaParaDev)
 		if err != nil {
-			m.mensaje = IconError(err.Error())
+			m.mensaje = icons.IconError(err.Error())
 			return m, nil
 		}
-		m.mensaje = IconSuccess("Servidor iniciado en " + servidor.URL)
-		m.vista = VistaLogs
+		m.mensaje = icons.IconSuccess("Servidor iniciado en " + servidor.URL)
+		m.vista = domain.VistaLogs
 		m.logsScroll = 0
 		return m, tickCmd()
 	}
 
 	verLogs := func() (tea.Model, tea.Cmd) {
-		m.vista = VistaLogs
+		m.vista = domain.VistaLogs
 		m.logsScroll = 0
 		m.mensaje = ""
 		return m, tickCmd()
 	}
 
 	detenerServidor := func() (tea.Model, tea.Cmd) {
-		if err := gestor.DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
-			m.mensaje = IconError(err.Error())
+		if err := m.serverMgr.DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
+			m.mensaje = icons.IconError(err.Error())
 		} else {
-			m.mensaje = Icons.Stop + " Servidor detenido"
+			m.mensaje = icons.Icons.Stop + " Servidor detenido"
 		}
-		m.vista = VistaMenu
+		m.vista = domain.VistaMenu
 		m.recrearMenuPrincipal()
 		return m, nil
 	}
@@ -523,13 +524,13 @@ func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return detenerServidor()
 			}
 		case "p":
-			return m, ejecutarThemePull(m.tiendaParaDev)
+			return m, commands.EjecutarThemePull(m.tiendaParaDev)
 		case "u":
-			return m, ejecutarThemePush(m.tiendaParaDev)
+			return m, commands.EjecutarThemePush(m.tiendaParaDev)
 		case "e":
-			return m, ejecutarAbrirEditor(m.tiendaParaDev)
+			return m, commands.EjecutarAbrirEditor(m.tiendaParaDev)
 		case "t":
-			return m, ejecutarAbrirTerminal(m.tiendaParaDev)
+			return m, commands.EjecutarAbrirTerminal(m.tiendaParaDev)
 
 		case "enter":
 			item, ok := m.lista.SelectedItem().(itemMenu)
@@ -550,16 +551,16 @@ func (m Model) updateSeleccionarModo(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return detenerServidor()
 
 			case strings.Contains(titulo, "Pull"):
-				return m, ejecutarThemePull(m.tiendaParaDev)
+				return m, commands.EjecutarThemePull(m.tiendaParaDev)
 
 			case strings.Contains(titulo, "Push"):
-				return m, ejecutarThemePush(m.tiendaParaDev)
+				return m, commands.EjecutarThemePush(m.tiendaParaDev)
 
 			case strings.Contains(titulo, "Editor"):
-				return m, ejecutarAbrirEditor(m.tiendaParaDev)
+				return m, commands.EjecutarAbrirEditor(m.tiendaParaDev)
 
 			case strings.Contains(titulo, "Terminal"):
-				return m, ejecutarAbrirTerminal(m.tiendaParaDev)
+				return m, commands.EjecutarAbrirTerminal(m.tiendaParaDev)
 			}
 		}
 	}
@@ -575,7 +576,7 @@ func (m Model) updateServidores(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "s":
 
-			servidores := ObtenerGestor().ObtenerServidoresActivos()
+			servidores := m.serverMgr.ObtenerServidoresActivos()
 			if len(servidores) == 0 {
 				return m, nil
 			}
@@ -586,31 +587,30 @@ func (m Model) updateServidores(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			servidor := servidores[indice]
-			if err := ObtenerGestor().DetenerServidor(servidor.Tienda.Nombre); err != nil {
-				m.mensaje = IconError(err.Error())
+			if err := m.serverMgr.DetenerServidor(servidor.Tienda.Nombre); err != nil {
+				m.mensaje = icons.IconError(err.Error())
 			} else {
-				m.mensaje = IconSuccess("Servidor de '" + servidor.Tienda.Nombre + "' detenido")
+				m.mensaje = icons.IconSuccess("Servidor de '" + servidor.Tienda.Nombre + "' detenido")
 			}
 			return m, nil
 
 		case "S":
 
-			ObtenerGestor().DetenerTodos()
+			m.serverMgr.DetenerTodos()
 			m.mensaje = "✅ Todos los servidores detenidos"
 			return m, nil
 
 		case "j", "down":
 
-			servidores := ObtenerGestor().ObtenerServidoresActivos()
+			servidores := m.serverMgr.ObtenerServidoresActivos()
 			if len(servidores) > 0 {
-
 				m.lista, _ = m.lista.Update(msg)
 			}
 			return m, nil
 
 		case "k", "up":
 
-			servidores := ObtenerGestor().ObtenerServidoresActivos()
+			servidores := m.serverMgr.ObtenerServidoresActivos()
 			if len(servidores) > 0 {
 				m.lista, _ = m.lista.Update(msg)
 			}
@@ -622,7 +622,7 @@ func (m Model) updateServidores(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
-	servidor := ObtenerGestor().ObtenerServidor(m.tiendaParaDev.Nombre)
+	servidor := m.serverMgr.ObtenerServidor(m.tiendaParaDev.Nombre)
 
 	getMaxScroll := func() int {
 		if servidor == nil {
@@ -682,20 +682,19 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "v":
 
 			m.modoSeleccion = true
-			m.mensaje = IconInfo("Modo selección ON - Usa Ctrl+Shift+C para copiar, 'v' para salir")
+			m.mensaje = icons.IconInfo("Modo selección ON - Usa Ctrl+Shift+C para copiar, 'v' para salir")
 
 			return m, tea.DisableMouse
 
 		case "ctrl+q":
 
 			m.modoSeleccion = false
-			m.vista = VistaSeleccionarModo
-			gestor := ObtenerGestor()
-			tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
+			m.vista = domain.VistaSeleccionarModo
+			tieneServidor := m.serverMgr.TieneServidorActivo(m.tiendaParaDev.Nombre)
 			items := crearListaModos(m.tiendaParaDev, tieneServidor)
-			titulo := Icons.Server + " " + m.tiendaParaDev.Nombre
+			titulo := icons.Icons.Server + " " + m.tiendaParaDev.Nombre
 			if tieneServidor {
-				titulo = Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " (servidor activo)"
+				titulo = icons.Icons.ServerOn + " " + m.tiendaParaDev.Nombre + " (servidor activo)"
 			}
 			m.lista = crearLista(items, titulo, m.ancho, m.alto)
 			m.mensaje = ""
@@ -704,10 +703,10 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "ctrl+s":
 
-			if err := ObtenerGestor().DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
-				m.mensaje = IconError(err.Error())
+			if err := m.serverMgr.DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
+				m.mensaje = icons.IconError(err.Error())
 			} else {
-				m.mensaje = Icons.Stop + " Servidor detenido"
+				m.mensaje = icons.Icons.Stop + " Servidor detenido"
 			}
 			return m, tickCmd()
 
@@ -778,7 +777,7 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				if input != "" {
 					if err := servidor.EnviarInput(input); err != nil {
-						m.mensaje = IconWarning("Error enviando input")
+						m.mensaje = icons.IconWarning("Error enviando input")
 					}
 				}
 			}
@@ -791,15 +790,15 @@ func (m Model) updateLogs(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func crearOpcionesPopup(tieneServidor bool) []itemMenu {
 	opciones := []itemMenu{
-		{titulo: Icons.Download + " Pull", desc: "Bajar cambios", atajo: "p"},
-		{titulo: Icons.Upload + " Push", desc: "Subir cambios", atajo: "u"},
-		{titulo: Icons.Editor + " Editor", desc: "Abrir VS Code", atajo: "e"},
-		{titulo: Icons.Terminal + " Terminal", desc: "Abrir terminal", atajo: "t"},
+		{titulo: icons.Icons.Download + " Pull", desc: "Bajar cambios", atajo: "p"},
+		{titulo: icons.Icons.Upload + " Push", desc: "Subir cambios", atajo: "u"},
+		{titulo: icons.Icons.Editor + " Editor", desc: "Abrir VS Code", atajo: "e"},
+		{titulo: icons.Icons.Terminal + " Terminal", desc: "Abrir terminal", atajo: "t"},
 	}
 
 	if tieneServidor {
 		opciones = append([]itemMenu{
-			{titulo: Icons.Stop + " Detener", desc: "Parar servidor", atajo: "s"},
+			{titulo: icons.Icons.Stop + " Detener", desc: "Parar servidor", atajo: "s"},
 		}, opciones...)
 	}
 
@@ -807,8 +806,7 @@ func crearOpcionesPopup(tieneServidor bool) []itemMenu {
 }
 
 func (m Model) updatePopup(msg tea.Msg) (tea.Model, tea.Cmd) {
-	gestor := ObtenerGestor()
-	tieneServidor := gestor.TieneServidorActivo(m.tiendaParaDev.Nombre)
+	tieneServidor := m.serverMgr.TieneServidorActivo(m.tiendaParaDev.Nombre)
 	opciones := crearOpcionesPopup(tieneServidor)
 
 	ejecutarOpcion := func(indice int) (tea.Model, tea.Cmd) {
@@ -817,30 +815,30 @@ func (m Model) updatePopup(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		opcion := opciones[indice]
-		m.vista = VistaLogs
+		m.vista = domain.VistaLogs
 
 		switch {
 		case strings.Contains(opcion.titulo, "Detener"):
-			if err := gestor.DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
-				m.mensaje = IconError(err.Error())
+			if err := m.serverMgr.DetenerServidor(m.tiendaParaDev.Nombre); err != nil {
+				m.mensaje = icons.IconError(err.Error())
 			} else {
-				m.mensaje = Icons.Stop + " Servidor detenido"
-				m.vista = VistaMenu
+				m.mensaje = icons.Icons.Stop + " Servidor detenido"
+				m.vista = domain.VistaMenu
 				m.recrearMenuPrincipal()
 			}
 			return m, nil
 
 		case strings.Contains(opcion.titulo, "Pull"):
-			return m, ejecutarThemePull(m.tiendaParaDev)
+			return m, commands.EjecutarThemePull(m.tiendaParaDev)
 
 		case strings.Contains(opcion.titulo, "Push"):
-			return m, ejecutarThemePush(m.tiendaParaDev)
+			return m, commands.EjecutarThemePush(m.tiendaParaDev)
 
 		case strings.Contains(opcion.titulo, "Editor"):
-			return m, ejecutarAbrirEditor(m.tiendaParaDev)
+			return m, commands.EjecutarAbrirEditor(m.tiendaParaDev)
 
 		case strings.Contains(opcion.titulo, "Terminal"):
-			return m, ejecutarAbrirTerminal(m.tiendaParaDev)
+			return m, commands.EjecutarAbrirTerminal(m.tiendaParaDev)
 		}
 
 		return m, tickCmd()

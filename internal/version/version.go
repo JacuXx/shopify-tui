@@ -1,4 +1,4 @@
-package main
+package version
 
 import (
 	"encoding/json"
@@ -17,7 +17,8 @@ type NpmPackageInfo struct {
 	} `json:"dist-tags"`
 }
 
-func verificarActualizacion() (hayActualizacion bool, versionNueva string) {
+// VerificarActualizacion consulta el registro npm y compara con la versión actual.
+func VerificarActualizacion() (hayActualizacion bool, versionNueva string) {
 	client := &http.Client{
 		Timeout: 3 * time.Second,
 	}
@@ -42,8 +43,4 @@ func verificarActualizacion() (hayActualizacion bool, versionNueva string) {
 	}
 
 	return false, ""
-}
-
-func compararVersiones(actual, nueva string) bool {
-	return actual != nueva
 }
