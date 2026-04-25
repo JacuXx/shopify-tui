@@ -6,15 +6,16 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/JacuXx/shopify-cli/internal/app"
 	"github.com/JacuXx/shopify-cli/internal/ui/icons"
 )
 
 func main() {
-
 	icons.InitIcons()
 
+	model, _ := app.New()
 	p := tea.NewProgram(
-		modeloInicial(),
+		model,
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)
