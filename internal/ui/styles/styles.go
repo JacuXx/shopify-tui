@@ -5,7 +5,7 @@ import "github.com/charmbracelet/lipgloss"
 var (
 	Titulo = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("#7D56F4")).
+		Foreground(lipgloss.Color("#96BF48")).
 		MarginBottom(1)
 
 	Exito = lipgloss.NewStyle().
@@ -19,10 +19,10 @@ var (
 	Contenedor = lipgloss.NewStyle().
 			Padding(1, 2).
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#7D56F4"))
+			BorderForeground(lipgloss.Color("#96BF48"))
 
 	InputActivo = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#7D56F4")).
+			Foreground(lipgloss.Color("#96BF48")).
 			Bold(true)
 
 	Label = lipgloss.NewStyle().
@@ -34,7 +34,7 @@ var (
 		MarginTop(1)
 
 	Info = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#7D56F4")).
+		Foreground(lipgloss.Color("#96BF48")).
 		Italic(true)
 
 	Atajo = lipgloss.NewStyle().
@@ -45,7 +45,7 @@ var (
 			Foreground(lipgloss.Color("#FFFFFF"))
 
 	ItemSeleccionado = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#7D56F4")).
+				Foreground(lipgloss.Color("#96BF48")).
 				Bold(true)
 
 	Desc = lipgloss.NewStyle().
@@ -53,12 +53,12 @@ var (
 
 	Popup = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#7D56F4")).
+		BorderForeground(lipgloss.Color("#96BF48")).
 		Padding(1, 2).
 		Background(lipgloss.Color("#1a1a2e"))
 
 	PopupTitulo = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("#7D56F4")).
+			Foreground(lipgloss.Color("#96BF48")).
 			MarginBottom(1)
 )

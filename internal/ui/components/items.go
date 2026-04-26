@@ -2,11 +2,14 @@ package components
 
 import (
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/JacuXx/shopify-cli/internal/domain"
 	"github.com/JacuXx/shopify-cli/internal/server"
 	"github.com/JacuXx/shopify-cli/internal/ui/icons"
 )
+
+const shopifyGreen = "#96BF48"
 
 // ItemMenu es un ítem genérico del menú con título, descripción y atajo.
 type ItemMenu struct {
@@ -74,8 +77,19 @@ func CrearLista(items []list.Item, titulo string, ancho, alto int) list.Model {
 		anchoLista = ancho - 4
 	}
 
-	lista := list.New(items, list.NewDefaultDelegate(), anchoLista, alturaItems)
+	delegate := list.NewDefaultDelegate()
+	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
+		Foreground(lipgloss.Color(shopifyGreen)).
+		BorderLeftForeground(lipgloss.Color(shopifyGreen))
+	delegate.Styles.SelectedDesc = delegate.Styles.SelectedDesc.
+		Foreground(lipgloss.Color(shopifyGreen)).
+		BorderLeftForeground(lipgloss.Color(shopifyGreen))
+
+	lista := list.New(items, delegate, anchoLista, alturaItems)
 	lista.Title = titulo
+	lista.Styles.Title = lista.Styles.Title.
+		Background(lipgloss.Color(shopifyGreen)).
+		Foreground(lipgloss.Color("#FFFFFF"))
 	lista.SetShowStatusBar(true)
 	lista.SetFilteringEnabled(true)
 	lista.SetShowPagination(true)
