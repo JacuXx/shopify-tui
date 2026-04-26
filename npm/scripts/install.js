@@ -10,11 +10,11 @@ function getBinaryName() {
   const platformMap = {
     'darwin': 'darwin',
     'linux': 'linux',
-    'win32': 'win32'
+    'win32': 'windows'
   };
-  
+
   const archMap = {
-    'x64': 'x64',
+    'x64': 'amd64',
     'arm64': 'arm64'
   };
   
@@ -75,10 +75,25 @@ function getShellConfigFile() {
 }
 
 function setupPath() {
-  if (os.platform() === 'win32') return;
-  
   const npmBin = getNpmGlobalBin();
   if (!npmBin) return;
+
+  if (os.platform() === 'win32') {
+    if (isInPath(npmBin)) return;
+    try {
+      execSync(
+        `powershell -Command "[System.Environment]::SetEnvironmentVariable('PATH', [System.Environment]::GetEnvironmentVariable('PATH','User') + ';${npmBin}', 'User')"`,
+        { encoding: 'utf8' }
+      );
+      console.log('');
+      console.log(`✅ PATH configurado: ${npmBin}`);
+      console.log('   Reinicia tu terminal para que tome efecto.');
+    } catch (e) {
+      console.log('');
+      console.log(`⚠️  Agrega manualmente a tu PATH de usuario: ${npmBin}`);
+    }
+    return;
+  }
   
   if (isInPath(npmBin)) {
     return;
@@ -138,7 +153,17 @@ function install() {
   cleanOldBinaries(binDir);
   
   if (fs.existsSync(destPath)) {
-    fs.unlinkSync(destPath);
+    try {
+      fs.unlinkSync(destPath);
+    } catch (e) {
+      if (os.platform() === 'win32' && e.code === 'EPERM') {
+        const oldPath = destPath + '.old';
+        try { fs.unlinkSync(oldPath); } catch (_) {}
+        fs.renameSync(destPath, oldPath);
+      } else {
+        throw e;
+      }
+    }
   }
   
   console.log(`📦 Configurando sho para ${os.platform()}/${os.arch()}...`);
