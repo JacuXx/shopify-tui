@@ -1,0 +1,21 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - errcheck      # errores no verificados
+    - govet         # análisis estático oficial
+    - staticcheck   # análisis avanzado
+    - unused        # código no usado
+    - gofmt         # formato canónico
+    - goimports     # imports organizados
+    - misspell      # typos en comentarios/strings
+
+linters-settings:
+  gofmt:
+    simplify: true
+
+issues:
+  exclude-dirs:
+    - releases
+    - vendor

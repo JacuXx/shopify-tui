@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: linux,   goarch: amd64, suffix: linux-amd64   }
+          - { goos: linux,   goarch: arm64, suffix: linux-arm64   }
+          - { goos: darwin,  goarch: amd64, suffix: darwin-amd64  }
+          - { goos: darwin,  goarch: arm64, suffix: darwin-arm64  }
+          - { goos: windows, goarch: amd64, suffix: windows-amd64 }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # Verificar invariantes del plan antes de publicar
+      - name: go build ./...
+        run: go build ./...
+
+      - name: go vet ./...
+        run: go vet ./...
+
+      - name: Build release binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          ext=""
+          [ "$GOOS" = "windows" ] && ext=".exe"
+          go build -ldflags="-s -w" \
+            -o "releases/shopify-tui-${{ matrix.suffix }}${ext}" .
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: releases/shopify-tui-${{ matrix.suffix }}*
+          generate_release_notes: true

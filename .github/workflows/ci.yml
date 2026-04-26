@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["v*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # ─── Invariantes del plan (arquitectura-escalable.md) ────────────────────────
+  build:
+    name: Build & Vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # Invariante #1 del plan: go build ./... compila sin errores
+      - name: go build
+        run: go build ./...
+
+      # Criterio de salida Step 8: go vet ./... limpio
+      - name: go vet
+        run: go vet ./...
+
+      # Módulos consistentes (evita "works on my machine")
+      - name: go mod tidy check
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum || \
+            (echo "❌ go.mod/go.sum desactualizados. Ejecuta 'go mod tidy' y commitea." && exit 1)
+
+  # ─── Linting ────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
+  # ─── Integridad de la arquitectura (plan: Step 8 exit criteria) ──────────────
+  architecture:
+    name: Architecture Integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Verificar que ningún archivo .go supera 300 líneas
+      # (criterio explícito del Step 8 del plan arquitectura-escalable.md)
+      - name: Check file line limits (300 lines max)
+        run: |
+          failed=0
+          while IFS= read -r file; do
+            lines=$(wc -l < "$file")
+            if [ "$lines" -gt 300 ]; then
+              echo "⚠️  $file: $lines líneas (máx 300 según plan arquitectura-escalable)"
+              failed=1
+            fi
+          done < <(find . -name "*.go" \
+            -not -path "./.git/*" \
+            -not -path "./releases/*" \
+            -not -path "./vendor/*")
+          branch="${GITHUB_REF#refs/heads/}"
+          if [[ "$branch" == "main" || "$branch" == refactor/* ]]; then
+            exit $failed
+          else
+            if [ $failed -eq 1 ]; then
+              echo "::warning::Archivos superan 300 líneas. Corrígelos antes del merge a main."
+            fi
+          fi
+
+      # Verificar que internal/ existe cuando estamos en refactor/step-2+
+      - name: Check internal/ package structure
+        run: |
+          branch="${GITHUB_REF#refs/heads/}"
+          if [[ "$branch" =~ refactor/step-[2-9] ]] || [ "$branch" = "main" ]; then
+            if [ ! -d "internal" ]; then
+              echo "❌ El directorio internal/ debe existir (plan: Step 1 es bloqueante)"
+              exit 1
+            fi
+            echo "✅ internal/ encontrado"
+          else
+            echo "ℹ️  Branch $branch — verificación de estructura omitida"
+          fi
+
+  # ─── Verificación cross-platform ─────────────────────────────────────────────
+  cross-build:
+    name: Cross-build (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: linux,   goarch: amd64 }
+          - { goos: linux,   goarch: arm64 }
+          - { goos: darwin,  goarch: amd64 }
+          - { goos: darwin,  goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Cross-compile
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          ext=""
+          [ "$GOOS" = "windows" ] && ext=".exe"
+          go build -ldflags="-s -w" -o "shopify-tui-${{ matrix.goos }}-${{ matrix.goarch }}${ext}" .
