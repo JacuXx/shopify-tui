@@ -12,6 +12,7 @@ import (
 	colorful "github.com/lucasb-eyer/go-colorful"
 )
 
+//go:embed shopify-logo.png
 var shopifyLogoData []byte
 
 func lerpColor(c1, c2 colorful.Color, t float64) colorful.Color {
