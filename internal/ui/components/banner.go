@@ -36,8 +36,6 @@ func resizeNearest(img image.Image, w, h int) image.Image {
 	return dst
 }
 
-// renderLogo convierte el PNG embebido a filas usando el truco half-block (▄):
-// cada terminal row = 2 filas de píxeles → bg=arriba, fg=abajo → doble resolución.
 func renderLogo(data []byte, termW, termH int) []string {
 	rows := make([]string, termH)
 	img, _, err := image.Decode(bytes.NewReader(data))
@@ -79,7 +77,6 @@ func renderLogo(data []byte, termW, termH int) []string {
 	return rows
 }
 
-// pixelFont: cuadrícula 5×5
 var pixelFont = map[rune][]string{
 	'S': {"01110", "10000", "01110", "00001", "01110"},
 	'H': {"10001", "10001", "11111", "10001", "10001"},
