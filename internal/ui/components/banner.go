@@ -3,8 +3,8 @@ package components
 import (
 	"strings"
 
-	figure "github.com/common-nighthawk/go-figure"
 	"github.com/charmbracelet/lipgloss"
+	figure "github.com/common-nighthawk/go-figure"
 )
 
 func RenderBanner() string {

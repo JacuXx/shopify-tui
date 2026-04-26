@@ -86,7 +86,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if msg.Tienda != nil {
 			m.tiendas = append(m.tiendas, *msg.Tienda)
-			m.storeRepo.GuardarTiendas(m.tiendas)
+			if err := m.storeRepo.GuardarTiendas(m.tiendas); err != nil {
+				m.mensaje = icons.IconError("Error al guardar tienda: " + err.Error())
+				return m, nil
+			}
 			m.mensaje = icons.IconSuccess("Tienda '" + msg.Tienda.Nombre + "' agregada correctamente")
 			m.vista = domain.VistaMenu
 			m.menu.Rebuild(m.ancho, m.alto)

@@ -44,7 +44,7 @@ func Update(s State, msg tea.Msg, tiendaParaDev domain.Tienda, serverMgr server.
 		switch {
 		case strings.Contains(opcion.Titulo, "Detener"):
 			if err := serverMgr.DetenerServidor(tiendaParaDev.Nombre); err != nil {
-				_ = icons.IconError(err.Error())
+				_ = icons.IconError(err.Error()) //nolint:errcheck
 				return s, domain.NavTo(domain.VistaLogs)
 			}
 			return s, domain.NavTo(domain.VistaMenu)

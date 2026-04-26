@@ -19,7 +19,7 @@ import (
 func New() (tea.Model, tea.Cmd) {
 	storeRepo := store.NewJSONRepository()
 	serverMgr := server.NewProcessManager()
-	tiendas, _ := storeRepo.CargarTiendas()
+	tiendas, _ := storeRepo.CargarTiendas() //nolint:errcheck // app arranca con lista vacía si el archivo no existe
 	hayUpdate, versionNew := version.VerificarActualizacion()
 
 	m := Model{

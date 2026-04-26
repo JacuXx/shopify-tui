@@ -85,7 +85,7 @@ func (g *ProcessManager) IniciarServidor(tienda domain.Tienda) (*ServidorActivo,
 	go leerLogs(stderr, servidor)
 
 	go func() {
-		cmd.Wait()
+		_ = cmd.Wait() //nolint:errcheck // proceso terminado por señal externa; error no accionable
 		g.mutex.Lock()
 		defer g.mutex.Unlock()
 		if s, ok := g.servidores[tienda.Nombre]; ok {
@@ -133,7 +133,7 @@ func (g *ProcessManager) DetenerTodos() {
 	for nombre, servidor := range g.servidores {
 		if servidor.Activo {
 			if cmd, ok := g.procesos[nombre]; ok && cmd.Process != nil {
-				cmd.Process.Kill()
+				_ = cmd.Process.Kill() //nolint:errcheck // proceso puede ya estar muerto; error esperado
 			}
 			servidor.Activo = false
 		}

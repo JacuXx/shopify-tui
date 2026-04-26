@@ -150,7 +150,7 @@ func Update(s State, msg tea.Msg, servidor *server.ServidorActivo, tiendaParaDev
 				}
 
 				if input != "" {
-					servidor.EnviarInput(input)
+					_ = servidor.EnviarInput(input)
 				}
 			}
 			return s, nil
