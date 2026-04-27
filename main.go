@@ -8,9 +8,15 @@ import (
 
 	"github.com/JacuXx/shopify-cli/internal/app"
 	"github.com/JacuXx/shopify-cli/internal/ui/icons"
+	"github.com/JacuXx/shopify-cli/internal/version"
 )
 
 func main() {
+	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
+		fmt.Println(version.Version)
+		os.Exit(0)
+	}
+
 	icons.InitIcons()
 
 	model, _ := app.New()
