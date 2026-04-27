@@ -28,5 +28,8 @@ debug.log
 .DS_Store
 Thumbs.db
 
+# npm auth (generado en CI)
+.npmrc
+
 # Archivos de configuración local (opcional, descomenta si no quieres subir tu config)
 # ~/.config/shopify-tui/
