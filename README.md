@@ -1,7 +1,7 @@
 # 🛒 Shopify CLI TUI
 
 <p align="center">
-  <img src="https://img.shields.io/npm/v/shopify-cli-tui?style=flat-square&color=blue&cacheSeconds=60" alt="npm version">
+  <img src="https://img.shields.io/github/v/release/JacuXx/shopify-tui?style=flat-square&color=blue" alt="version">
   <img src="https://img.shields.io/github/license/JacuXx/shopify-tui?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey?style=flat-square" alt="platform">
 </p>
@@ -10,53 +10,55 @@ CLI interactivo tipo Vim para gestionar múltiples tiendas Shopify. Permite inic
 
 ## 🚀 Instalación
 
-```bash
-bun add -g shopify-cli-tui --trust
+**macOS / Linux:**
+```sh
+curl -fsSL https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.sh | sh
+```
+
+**Windows (PowerShell):**
+```powershell
+iwr https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.ps1 | iex
 ```
 
 ## 🔄 Actualización
 
-```bash
-bun add -g shopify-cli-tui --trust
+Ejecuta el mismo comando de instalación — siempre descarga la versión más reciente y sobreescribe el binario anterior.
+
+**macOS / Linux:**
+```sh
+curl -fsSL https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.sh | sh
+```
+
+**Windows (PowerShell):**
+```powershell
+iwr https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.ps1 | iex
 ```
 
 ## 🗑️ Desinstalar
 
-```bash
-bun remove -g shopify-cli-tui
+**macOS / Linux:**
+```sh
+sudo rm /usr/local/bin/sho
+```
+
+**Windows (PowerShell):**
+```powershell
+Remove-Item "$env:USERPROFILE\.local\bin\sho.exe"
 ```
 
 ## ▶️ Ejecutar
 
 ```bash
-sho .
+sho
 ```
 
 > **Requisito:** Necesitas tener [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) instalado: `npm install -g @shopify/cli`
 
-### ⚠️ Si el comando `sho` no se encuentra
+## 🔍 Verificar versión instalada
 
-Si después de instalar aparece `command not found: sho`, es porque el directorio bin de bun no está en tu PATH.
-
-**macOS / Linux:**
 ```bash
-# Ver dónde está el directorio bin de bun
-bun pm bin -g
-
-# Agregar al PATH (reemplaza la ruta si es diferente)
-export PATH="$HOME/.bun/bin:$PATH"
-
-# Hacerlo permanente (zsh)
-echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
-
-# Hacerlo permanente (bash)
-echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
+sho --version
 ```
-
-**Windows:**
-Asegúrate de que `%USERPROFILE%\.bun\bin` está en el PATH del sistema o ejecuta desde PowerShell como administrador.
 
 ---
 
@@ -245,15 +247,20 @@ git clone https://github.com/JacuXx/shopify-tui.git
 cd shopify-tui
 
 # Compilar
-go build -o shopify-tui .
+go build -o sho .
 
 # Ejecutar
-./shopify-tui
+./sho
 ```
 
 ---
 
 ## 📝 Changelog
+
+### v2.1.x
+- 📦 Distribución vía scripts `install.sh` / `install.ps1` (binarios desde GitHub Releases)
+- 🔍 `sho --version` / `sho -v` para verificar versión instalada
+- 🔔 Notificación de actualización muestra comando `curl` directamente en el TUI
 
 ### v1.4.0
 - 📝 **URL simplificado** - Solo escribe el nombre de la tienda, `.myshopify.com` se agrega automáticamente
