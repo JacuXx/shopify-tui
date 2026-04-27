@@ -4,6 +4,6 @@
   "license": "MIT",
   "exports": "./bin/cli.ts",
   "publish": {
-    "include": ["bin/", "scripts/", "package.json"]
+    "include": ["bin/cli.ts", "scripts/", "package.json"]
   }
 }

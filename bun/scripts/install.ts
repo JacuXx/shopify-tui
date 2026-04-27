@@ -3,8 +3,13 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import os from 'os';
 import { execSync } from 'child_process';
+import https from 'https';
 
 const __dirname: string = path.dirname(fileURLToPath(import.meta.url));
+
+const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+const VERSION: string = pkg.version;
+const REPO = 'JacuXx/shopify-tui';
 
 const platformMap: Record<string, string> = {
   'darwin': 'darwin',
@@ -35,16 +40,27 @@ function getBinaryName(): string {
   return `shopify-tui-${p}-${a}${ext}`;
 }
 
-function cleanOldBinaries(binDir: string): void {
-  const oldNames: string[] = ['shopify-cli', 'shopify-cli.exe', 'sho.', 'sho..exe'];
-  oldNames.forEach((name: string) => {
-    const oldPath: string = path.join(binDir, name);
-    if (fs.existsSync(oldPath)) {
-      try {
-        fs.unlinkSync(oldPath);
-        console.log(`🧹 Eliminado binario viejo: ${name}`);
-      } catch (_e) {}
+function downloadFile(url: string, dest: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(dest);
+
+    function get(redirectUrl: string): void {
+      https.get(redirectUrl, (res) => {
+        if (res.statusCode === 301 || res.statusCode === 302) {
+          get(res.headers.location!);
+          return;
+        }
+        if (res.statusCode !== 200) {
+          reject(new Error(`HTTP ${res.statusCode}`));
+          return;
+        }
+        res.pipe(file);
+        file.on('finish', () => file.close(() => resolve()));
+        file.on('error', reject);
+      }).on('error', reject);
     }
+
+    get(url);
   });
 }
 
@@ -98,15 +114,12 @@ function setupPath(): void {
     return;
   }
 
-  if (isInPath(bunBin)) {
-    return;
-  }
+  if (isInPath(bunBin)) return;
 
   const configFile: string | null = getShellConfigFile();
   if (!configFile) {
     console.log('');
     console.log('⚠️  El directorio de bun no está en tu PATH.');
-    console.log(`   Agrega esto a tu archivo de configuración del shell:`);
     console.log(`   export PATH="${bunBin}:$PATH"`);
     return;
   }
@@ -118,17 +131,13 @@ function setupPath(): void {
     if (fs.existsSync(configFile)) {
       configContent = fs.readFileSync(configFile, 'utf8');
     }
+    if (configContent.includes(bunBin)) return;
 
-    if (configContent.includes(bunBin)) {
-      return;
-    }
-
-    fs.appendFileSync(configFile, `\n# Agregado por shopify-cli-tui\n${exportLine}\n`);
+    fs.appendFileSync(configFile, `\n# Agregado por shopify-tui\n${exportLine}\n`);
     console.log('');
     console.log(`✅ PATH configurado automáticamente en ${path.basename(configFile)}`);
     console.log('   Reinicia tu terminal o ejecuta:');
     console.log(`   source ${configFile}`);
-
   } catch (_err) {
     console.log('');
     console.log('⚠️  No se pudo configurar el PATH automáticamente.');
@@ -137,58 +146,35 @@ function setupPath(): void {
   }
 }
 
-function install(): void {
+async function install(): Promise<void> {
   const binaryName: string = getBinaryName();
   const binDir: string = path.join(__dirname, '..', 'bin');
-  const sourcePath: string = path.join(binDir, binaryName);
   const destName: string = os.platform() === 'win32' ? 'sho.exe' : 'sho';
   const destPath: string = path.join(binDir, destName);
 
-  if (!fs.existsSync(sourcePath)) {
-    console.error(`❌ Binario no encontrado: ${binaryName}`);
-    console.error('   Los binarios incluidos son:');
-    fs.readdirSync(binDir).filter((f: string) => f.startsWith('shopify-tui-')).forEach((f: string) => {
-      console.error(`   - ${f}`);
-    });
-    process.exit(1);
+  if (!fs.existsSync(binDir)) {
+    fs.mkdirSync(binDir, { recursive: true });
   }
 
-  cleanOldBinaries(binDir);
+  const downloadUrl = `https://github.com/${REPO}/releases/download/v${VERSION}/${binaryName}`;
 
-  if (fs.existsSync(destPath)) {
-    try {
-      fs.unlinkSync(destPath);
-    } catch (e: unknown) {
-      const error = e as NodeJS.ErrnoException;
-      if (os.platform() === 'win32' && error.code === 'EPERM') {
-        const oldPath: string = destPath + '.old';
-        try { fs.unlinkSync(oldPath); } catch (_) {}
-        fs.renameSync(destPath, oldPath);
-      } else {
-        throw e;
-      }
-    }
-  }
-
-  console.log(`📦 Configurando sho para ${os.platform()}/${os.arch()}...`);
+  console.log(`📦 Descargando sho v${VERSION} para ${os.platform()}/${os.arch()}...`);
 
   try {
-    fs.copyFileSync(sourcePath, destPath);
+    await downloadFile(downloadUrl, destPath);
 
     if (os.platform() !== 'win32') {
       fs.chmodSync(destPath, 0o755);
     }
 
     console.log('✅ sho instalado correctamente!');
-
     setupPath();
-
     console.log('');
     console.log('🚀 Ejecuta: sho');
-
   } catch (err: unknown) {
     const error = err as Error;
-    console.error('❌ Error configurando binario:', error.message);
+    console.error('❌ Error descargando binario:', error.message);
+    console.error(`   URL: ${downloadUrl}`);
     process.exit(1);
   }
 }
