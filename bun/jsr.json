@@ -1,6 +1,7 @@
 {
   "name": "@jacuxx/shopify-tui",
   "version": "2.1.6",
+  "license": "MIT",
   "exports": "./bin/cli.ts",
   "publish": {
     "include": ["bin/", "scripts/", "package.json"]

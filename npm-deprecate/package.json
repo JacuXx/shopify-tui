@@ -1,0 +1,15 @@
+{
+  "name": "shopify-cli-tui",
+  "version": "2.2.0",
+  "description": "DEPRECATED - Este paquete se mudo a JSR. Usa: bunx jsr add @jacuxx/shopify-tui",
+  "scripts": {
+    "postinstall": "node migrate.js"
+  },
+  "author": "JacuXx",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JacuXx/shopify-tui.git"
+  },
+  "deprecated": "Este paquete se mudo a JSR. Instala con: bunx jsr add @jacuxx/shopify-tui"
+}

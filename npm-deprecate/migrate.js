@@ -1,0 +1,14 @@
+console.log('');
+console.log('==========================================================');
+console.log('');
+console.log('  shopify-cli-tui se mudo a JSR');
+console.log('');
+console.log('  Para actualizar, ejecuta:');
+console.log('');
+console.log('    1. bun remove -g shopify-cli-tui');
+console.log('    2. bunx jsr add -g @jacuxx/shopify-tui');
+console.log('');
+console.log('  Mas info: https://jsr.io/@jacuxx/shopify-tui');
+console.log('');
+console.log('==========================================================');
+console.log('');
