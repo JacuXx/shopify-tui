@@ -38,7 +38,7 @@ jobs:
 
       - name: Publish to JSR
         working-directory: bun
-        run: npx jsr publish
+        run: npx jsr publish --allow-dirty
 
   release:
     name: Build & Release (${{ matrix.goos }}/${{ matrix.goarch }})
