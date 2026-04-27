@@ -6,6 +6,11 @@ shopify-tui
 *.so
 *.dylib
 
+# Binarios de distribución (se descargan desde GitHub Releases al instalar)
+bun/bin/shopify-tui-*
+bun/bin/sho
+bun/bin/sho.exe
+
 # Archivos de test
 *.test
 *.out
