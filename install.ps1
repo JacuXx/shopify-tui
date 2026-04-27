@@ -1,0 +1,50 @@
+$ErrorActionPreference = "Stop"
+
+$REPO = "JacuXx/shopify-tui"
+$BINARY = "sho.exe"
+$INSTALL_DIR = "$env:USERPROFILE\.local\bin"
+
+# Detect architecture
+$ARCH = if ([System.Environment]::Is64BitOperatingSystem) {
+  $cpu = (Get-CimInstance Win32_Processor).Architecture
+  if ($cpu -eq 12) { "arm64" } else { "amd64" }
+} else {
+  Write-Host "❌ Arquitectura no soportada. Se requiere 64-bit."
+  exit 1
+}
+
+# Get latest version from GitHub API
+Write-Host "🔍 Buscando última versión..."
+$release = Invoke-RestMethod -Uri "https://api.github.com/repos/$REPO/releases/latest" -UseBasicParsing
+$VERSION = $release.tag_name -replace '^v', ''
+
+if (-not $VERSION) {
+  Write-Host "❌ No se pudo obtener la versión más reciente."
+  exit 1
+}
+
+$BINARY_NAME = "shopify-tui-windows-$ARCH.exe"
+$DOWNLOAD_URL = "https://github.com/$REPO/releases/download/v$VERSION/$BINARY_NAME"
+
+Write-Host "📦 Descargando sho v$VERSION para windows/$ARCH..."
+
+# Create install dir if needed
+if (-not (Test-Path $INSTALL_DIR)) {
+  New-Item -ItemType Directory -Path $INSTALL_DIR -Force | Out-Null
+}
+
+$DEST = Join-Path $INSTALL_DIR $BINARY
+Invoke-WebRequest -Uri $DOWNLOAD_URL -OutFile $DEST -UseBasicParsing
+
+# Add to PATH if not already there
+$USER_PATH = [System.Environment]::GetEnvironmentVariable("PATH", "User")
+if ($USER_PATH -notlike "*$INSTALL_DIR*") {
+  [System.Environment]::SetEnvironmentVariable("PATH", "$INSTALL_DIR;$USER_PATH", "User")
+  Write-Host ""
+  Write-Host "✅ PATH configurado: $INSTALL_DIR"
+  Write-Host "   Reinicia tu terminal para que tome efecto."
+}
+
+Write-Host "✅ sho v$VERSION instalado en $DEST"
+Write-Host ""
+Write-Host "🚀 Ejecuta: sho"

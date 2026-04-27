@@ -1,54 +1,63 @@
-#!/bin/bash
-
-
+#!/bin/sh
 set -e
 
-REPO="JacuXx/shopify-cli"
-BINARY_NAME="shopify-cli"
+REPO="JacuXx/shopify-tui"
+BINARY="sho"
 INSTALL_DIR="/usr/local/bin"
 
-echo "🛒 Instalando $BINARY_NAME..."
-
+# Detect OS
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-ARCH=$(uname -m)
-
-case $ARCH in
-    x86_64) ARCH="amd64" ;;
-    aarch64|arm64) ARCH="arm64" ;;
-    *) echo "❌ Arquitectura no soportada: $ARCH"; exit 1 ;;
+case "$OS" in
+  darwin) PLATFORM="darwin" ;;
+  linux)  PLATFORM="linux" ;;
+  *)
+    echo "❌ Sistema operativo no soportado: $OS"
+    echo "   Plataformas soportadas: darwin (macOS), linux"
+    exit 1
+    ;;
 esac
 
-echo "📦 Sistema: $OS/$ARCH"
-
-if ! command -v go &> /dev/null; then
-    echo "❌ Go no está instalado. Instálalo primero:"
-    echo "   https://go.dev/dl/"
+# Detect architecture
+ARCH=$(uname -m)
+case "$ARCH" in
+  x86_64)  ARCH="amd64" ;;
+  aarch64) ARCH="arm64" ;;
+  arm64)   ARCH="arm64" ;;
+  *)
+    echo "❌ Arquitectura no soportada: $ARCH"
+    echo "   Arquitecturas soportadas: x86_64, arm64"
     exit 1
+    ;;
+esac
+
+# Get latest version from GitHub API
+echo "🔍 Buscando última versión..."
+VERSION=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
+  | grep '"tag_name"' \
+  | sed 's/.*"tag_name": *"v\([^"]*\)".*/\1/')
+
+if [ -z "$VERSION" ]; then
+  echo "❌ No se pudo obtener la versión más reciente."
+  exit 1
 fi
 
-if ! command -v shopify &> /dev/null; then
-    echo "⚠️  Shopify CLI no encontrado. Instálalo con:"
-    echo "   npm install -g @shopify/cli"
+BINARY_NAME="shopify-tui-${PLATFORM}-${ARCH}"
+DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v${VERSION}/${BINARY_NAME}"
+
+echo "📦 Descargando sho v${VERSION} para ${PLATFORM}/${ARCH}..."
+
+TMP_FILE=$(mktemp)
+curl -fsSL "$DOWNLOAD_URL" -o "$TMP_FILE"
+chmod +x "$TMP_FILE"
+
+# Install binary
+if [ -w "$INSTALL_DIR" ]; then
+  mv "$TMP_FILE" "${INSTALL_DIR}/${BINARY}"
+else
+  echo "🔑 Se requieren permisos de administrador para instalar en ${INSTALL_DIR}..."
+  sudo mv "$TMP_FILE" "${INSTALL_DIR}/${BINARY}"
 fi
 
-TEMP_DIR=$(mktemp -d)
-cd "$TEMP_DIR"
-
-echo "📥 Descargando código fuente..."
-git clone --depth 1 "https://github.com/$REPO.git" .
-
-echo "🔨 Compilando..."
-go build -o "$BINARY_NAME" .
-
-echo "📦 Instalando en $INSTALL_DIR..."
-sudo mv "$BINARY_NAME" "$INSTALL_DIR/"
-sudo chmod +x "$INSTALL_DIR/$BINARY_NAME"
-
-cd -
-rm -rf "$TEMP_DIR"
-
+echo "✅ sho v${VERSION} instalado en ${INSTALL_DIR}/${BINARY}"
 echo ""
-echo "✅ ¡Instalación completada!"
-echo ""
-echo "🚀 Ejecuta: $BINARY_NAME"
-echo ""
+echo "🚀 Ejecuta: sho"
