@@ -15,6 +15,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build all platform binaries
+        run: |
+          CGO_ENABLED=0
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o bun/bin/shopify-tui-linux-amd64 .
+          GOOS=linux   GOARCH=arm64 go build -ldflags="-s -w" -o bun/bin/shopify-tui-linux-arm64 .
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o bun/bin/shopify-tui-darwin-amd64 .
+          GOOS=darwin  GOARCH=arm64 go build -ldflags="-s -w" -o bun/bin/shopify-tui-darwin-arm64 .
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o bun/bin/shopify-tui-windows-amd64.exe .
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
