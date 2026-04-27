@@ -1,12 +1,12 @@
 {
-  "name": "shopify-cli-tui",
+  "name": "@jacuxx/shopify-tui",
   "version": "2.1.6",
   "description": "CLI interactivo tipo Vim para gestionar tiendas Shopify",
   "bin": {
-    "sho": "bin/cli.js"
+    "sho": "bin/cli.ts"
   },
   "scripts": {
-    "postinstall": "bun run scripts/install.js"
+    "postinstall": "bun run scripts/install.ts"
   },
   "keywords": [
     "shopify",

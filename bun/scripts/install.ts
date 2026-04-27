@@ -4,25 +4,25 @@ import path from 'path';
 import os from 'os';
 import { execSync } from 'child_process';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname: string = path.dirname(fileURLToPath(import.meta.url));
 
-function getBinaryName() {
-  const platform = os.platform();
-  const arch = os.arch();
+const platformMap: Record<string, string> = {
+  'darwin': 'darwin',
+  'linux': 'linux',
+  'win32': 'windows'
+};
 
-  const platformMap = {
-    'darwin': 'darwin',
-    'linux': 'linux',
-    'win32': 'windows'
-  };
+const archMap: Record<string, string> = {
+  'x64': 'amd64',
+  'arm64': 'arm64'
+};
 
-  const archMap = {
-    'x64': 'amd64',
-    'arm64': 'arm64'
-  };
+function getBinaryName(): string {
+  const platform: string = os.platform();
+  const arch: string = os.arch();
 
-  const p = platformMap[platform];
-  const a = archMap[arch];
+  const p: string | undefined = platformMap[platform];
+  const a: string | undefined = archMap[arch];
 
   if (!p || !a) {
     console.error(`❌ Plataforma no soportada: ${platform}/${arch}`);
@@ -31,40 +31,40 @@ function getBinaryName() {
     process.exit(1);
   }
 
-  const ext = platform === 'win32' ? '.exe' : '';
+  const ext: string = platform === 'win32' ? '.exe' : '';
   return `shopify-tui-${p}-${a}${ext}`;
 }
 
-function cleanOldBinaries(binDir) {
-  const oldNames = ['shopify-cli', 'shopify-cli.exe', 'sho.', 'sho..exe'];
-  oldNames.forEach(name => {
-    const oldPath = path.join(binDir, name);
+function cleanOldBinaries(binDir: string): void {
+  const oldNames: string[] = ['shopify-cli', 'shopify-cli.exe', 'sho.', 'sho..exe'];
+  oldNames.forEach((name: string) => {
+    const oldPath: string = path.join(binDir, name);
     if (fs.existsSync(oldPath)) {
       try {
         fs.unlinkSync(oldPath);
         console.log(`🧹 Eliminado binario viejo: ${name}`);
-      } catch (e) {}
+      } catch (_e) {}
     }
   });
 }
 
-function getBunGlobalBin() {
+function getBunGlobalBin(): string | null {
   try {
-    const result = execSync('bun pm bin -g', { encoding: 'utf8' }).trim();
+    const result: string = execSync('bun pm bin -g', { encoding: 'utf8' }).trim();
     return result || null;
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }
 
-function isInPath(dir) {
-  const pathEnv = process.env.PATH || '';
+function isInPath(dir: string): boolean {
+  const pathEnv: string = process.env.PATH || '';
   return pathEnv.split(path.delimiter).includes(dir);
 }
 
-function getShellConfigFile() {
-  const shell = process.env.SHELL || '';
-  const home = os.homedir();
+function getShellConfigFile(): string | null {
+  const shell: string = process.env.SHELL || '';
+  const home: string = os.homedir();
 
   if (shell.includes('zsh')) {
     return path.join(home, '.zshrc');
@@ -77,8 +77,8 @@ function getShellConfigFile() {
   return null;
 }
 
-function setupPath() {
-  const bunBin = getBunGlobalBin();
+function setupPath(): void {
+  const bunBin: string | null = getBunGlobalBin();
   if (!bunBin) return;
 
   if (os.platform() === 'win32') {
@@ -91,7 +91,7 @@ function setupPath() {
       console.log('');
       console.log(`✅ PATH configurado: ${bunBin}`);
       console.log('   Reinicia tu terminal para que tome efecto.');
-    } catch (e) {
+    } catch (_e) {
       console.log('');
       console.log(`⚠️  Agrega manualmente a tu PATH de usuario: ${bunBin}`);
     }
@@ -102,7 +102,7 @@ function setupPath() {
     return;
   }
 
-  const configFile = getShellConfigFile();
+  const configFile: string | null = getShellConfigFile();
   if (!configFile) {
     console.log('');
     console.log('⚠️  El directorio de bun no está en tu PATH.');
@@ -111,10 +111,10 @@ function setupPath() {
     return;
   }
 
-  const exportLine = `export PATH="${bunBin}:$PATH"`;
+  const exportLine: string = `export PATH="${bunBin}:$PATH"`;
 
   try {
-    let configContent = '';
+    let configContent: string = '';
     if (fs.existsSync(configFile)) {
       configContent = fs.readFileSync(configFile, 'utf8');
     }
@@ -129,7 +129,7 @@ function setupPath() {
     console.log('   Reinicia tu terminal o ejecuta:');
     console.log(`   source ${configFile}`);
 
-  } catch (err) {
+  } catch (_err) {
     console.log('');
     console.log('⚠️  No se pudo configurar el PATH automáticamente.');
     console.log(`   Agrega esta línea a ${configFile}:`);
@@ -137,17 +137,17 @@ function setupPath() {
   }
 }
 
-function install() {
-  const binaryName = getBinaryName();
-  const binDir = path.join(__dirname, '..', 'bin');
-  const sourcePath = path.join(binDir, binaryName);
-  const destName = os.platform() === 'win32' ? 'sho.exe' : 'sho';
-  const destPath = path.join(binDir, destName);
+function install(): void {
+  const binaryName: string = getBinaryName();
+  const binDir: string = path.join(__dirname, '..', 'bin');
+  const sourcePath: string = path.join(binDir, binaryName);
+  const destName: string = os.platform() === 'win32' ? 'sho.exe' : 'sho';
+  const destPath: string = path.join(binDir, destName);
 
   if (!fs.existsSync(sourcePath)) {
     console.error(`❌ Binario no encontrado: ${binaryName}`);
     console.error('   Los binarios incluidos son:');
-    fs.readdirSync(binDir).filter(f => f.startsWith('shopify-tui-')).forEach(f => {
+    fs.readdirSync(binDir).filter((f: string) => f.startsWith('shopify-tui-')).forEach((f: string) => {
       console.error(`   - ${f}`);
     });
     process.exit(1);
@@ -158,9 +158,10 @@ function install() {
   if (fs.existsSync(destPath)) {
     try {
       fs.unlinkSync(destPath);
-    } catch (e) {
-      if (os.platform() === 'win32' && e.code === 'EPERM') {
-        const oldPath = destPath + '.old';
+    } catch (e: unknown) {
+      const error = e as NodeJS.ErrnoException;
+      if (os.platform() === 'win32' && error.code === 'EPERM') {
+        const oldPath: string = destPath + '.old';
         try { fs.unlinkSync(oldPath); } catch (_) {}
         fs.renameSync(destPath, oldPath);
       } else {
@@ -185,8 +186,9 @@ function install() {
     console.log('');
     console.log('🚀 Ejecuta: sho');
 
-  } catch (err) {
-    console.error('❌ Error configurando binario:', err.message);
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error('❌ Error configurando binario:', error.message);
     process.exit(1);
   }
 }
