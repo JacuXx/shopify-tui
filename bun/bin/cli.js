@@ -1,27 +1,30 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
-const { execFileSync } = require('child_process');
-const path = require('path');
-const os = require('os');
-const fs = require('fs');
+import { execFileSync } from 'child_process';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import os from 'os';
+import fs from 'fs';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function getBinaryPath() {
   const platform = os.platform();
-  
+
   let binaryName = 'sho';
-  
+
   if (platform === 'win32') {
     binaryName = 'sho.exe';
   }
-  
+
   const binaryPath = path.join(__dirname, binaryName);
-  
+
   if (!fs.existsSync(binaryPath)) {
     console.error('❌ Binario no encontrado:', binaryPath);
-    console.error('   Por favor reinstala el paquete: npm install -g shopify-cli-tui');
+    console.error('   Por favor reinstala el paquete: bun add -g shopify-cli-tui');
     process.exit(1);
   }
-  
+
   return binaryPath;
 }
 

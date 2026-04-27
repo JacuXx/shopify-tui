@@ -6,7 +6,7 @@
     "sho": "bin/cli.js"
   },
   "scripts": {
-    "postinstall": "node scripts/install.js"
+    "postinstall": "bun run scripts/install.js"
   },
   "keywords": [
     "shopify",
@@ -23,7 +23,8 @@
     "url": "git+https://github.com/JacuXx/shopify-tui.git"
   },
   "homepage": "https://github.com/JacuXx/shopify-tui#readme",
+  "type": "module",
   "engines": {
-    "node": ">=14"
+    "bun": ">=1.0"
   }
 }
