@@ -15,7 +15,7 @@ import (
 )
 
 // View renderiza la vista del menú principal completa (incluyendo banner).
-func View(s State, tiendas []domain.Tienda, serverMgr server.Manager, hayActualizacion bool, versionNueva, mensaje string) string {
+func View(s State, tiendas []domain.Tienda, serverMgr server.Manager, hayActualizacion bool, versionNueva, mensaje string, ancho int) string {
 	items := []components.ItemMenu{}
 	for _, item := range s.Lista.Items() {
 		if menuItem, ok := item.(components.ItemMenu); ok {
@@ -23,7 +23,7 @@ func View(s State, tiendas []domain.Tienda, serverMgr server.Manager, hayActuali
 		}
 	}
 
-	banner := components.RenderBanner()
+	banner := components.RenderBanner(ancho)
 	menuStr := renderMenuConAtajos(items, s.Lista.Index(), icons.Icons.App+" Configuración")
 
 	result := banner + "\n" + menuStr

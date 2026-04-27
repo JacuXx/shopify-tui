@@ -12,7 +12,7 @@ import (
 )
 
 // ViewAgregarTienda renderiza el formulario de agregar tienda (paso 1).
-func ViewAgregarTienda(s State) string {
+func ViewAgregarTienda(s State, ancho int) string {
 	var b strings.Builder
 
 	b.WriteString(styles.Titulo.Render("➕ Agregar Nueva Tienda"))
@@ -48,7 +48,11 @@ func ViewAgregarTienda(s State) string {
 
 	b.WriteString(styles.Ayuda.Render("tab: cambiar campo • enter: continuar • esc: cancelar"))
 
-	return styles.Contenedor.Render(b.String())
+	contenedor := styles.Contenedor
+	if ancho > 0 {
+		contenedor = contenedor.MaxWidth(ancho)
+	}
+	return contenedor.Render(b.String())
 }
 
 // ViewSeleccionarMetodo renderiza la vista de selección de método de descarga.
@@ -84,7 +88,7 @@ func ViewSeleccionarMetodo(s State) string {
 }
 
 // ViewInputGit renderiza la vista de input de URL de repositorio Git.
-func ViewInputGit(s State) string {
+func ViewInputGit(s State, ancho int) string {
 	var b strings.Builder
 
 	b.WriteString(styles.Titulo.Render(icons.Icons.Git + " Clonar desde Git"))
@@ -119,7 +123,11 @@ func ViewInputGit(s State) string {
 		b.WriteString(styles.Ayuda.Render("enter: continuar | q: volver"))
 	}
 
-	return styles.Contenedor.Render(b.String())
+	contenedor := styles.Contenedor
+	if ancho > 0 {
+		contenedor = contenedor.MaxWidth(ancho)
+	}
+	return contenedor.Render(b.String())
 }
 
 func renderMetodosConAtajos(items []components.ItemMenu, titulo string) string {

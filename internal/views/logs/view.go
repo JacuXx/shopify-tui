@@ -11,8 +11,13 @@ import (
 )
 
 // View renderiza la vista de logs del servidor.
-func View(s State, servidor *server.ServidorActivo, tiendaParaDev domain.Tienda, alto int, mensaje string) string {
+func View(s State, servidor *server.ServidorActivo, tiendaParaDev domain.Tienda, alto, ancho int, mensaje string) string {
 	var b strings.Builder
+
+	sepAncho := 60
+	if ancho > 0 && ancho-2 < sepAncho {
+		sepAncho = ancho - 2
+	}
 
 	if servidor != nil && servidor.Activo {
 		b.WriteString(styles.Exito.Render(icons.Icons.ServerOn + " " + tiendaParaDev.Nombre + " - Servidor activo"))
@@ -22,7 +27,7 @@ func View(s State, servidor *server.ServidorActivo, tiendaParaDev domain.Tienda,
 		b.WriteString(styles.Error.Render(icons.Icons.Stop + " " + tiendaParaDev.Nombre + " - Servidor detenido"))
 	}
 	b.WriteString("\n")
-	b.WriteString(strings.Repeat("-", 60))
+	b.WriteString(strings.Repeat("-", sepAncho))
 	b.WriteString("\n\n")
 
 	if servidor != nil {
@@ -77,7 +82,7 @@ func View(s State, servidor *server.ServidorActivo, tiendaParaDev domain.Tienda,
 	}
 
 	b.WriteString("\n\n")
-	b.WriteString(strings.Repeat("-", 60))
+	b.WriteString(strings.Repeat("-", sepAncho))
 	b.WriteString("\n")
 
 	if mensaje != "" {

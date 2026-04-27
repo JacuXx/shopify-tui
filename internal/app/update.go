@@ -23,6 +23,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ancho = msg.Width
 		m.alto = msg.Height
 		m.menu.Rebuild(msg.Width, msg.Height)
+		// Redimensionar la lista de selectStore si está activa
+		if m.vista == domain.VistaSeleccionarTienda || m.vista == domain.VistaSeleccionarModo {
+			anchoLista := msg.Width - 4
+			if anchoLista < 20 {
+				anchoLista = 20
+			}
+			alturaBanner := 12
+			altoLista := msg.Height - alturaBanner
+			if altoLista < 5 {
+				altoLista = 5
+			}
+			m.selectStore.Lista.SetSize(anchoLista, altoLista)
+		}
 		return m, nil
 
 	case tea.KeyMsg:

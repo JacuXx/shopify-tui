@@ -12,8 +12,12 @@ import (
 )
 
 // ViewSeleccionarTienda renderiza la vista de selección de tienda.
-func ViewSeleccionarTienda(s State) string {
-	return styles.Contenedor.Render(s.Lista.View())
+func ViewSeleccionarTienda(s State, ancho int) string {
+	contenedor := styles.Contenedor
+	if ancho > 0 {
+		contenedor = contenedor.MaxWidth(ancho)
+	}
+	return contenedor.Render(s.Lista.View())
 }
 
 // ViewSeleccionarModo renderiza la vista de selección de modo de desarrollo.

@@ -13,40 +13,40 @@ import (
 
 // View es el dispatcher puro de renderizado (patrón Elm Architecture).
 func (m Model) View() string {
-	banner := components.RenderBanner()
+	banner := components.RenderBanner(m.ancho)
 	var contenido string
 
 	switch m.vista {
 	case domain.VistaMenu:
-		return menu.View(m.menu, m.tiendas, m.serverMgr, m.hayActualizacion, m.versionNueva, m.mensaje)
+		return menu.View(m.menu, m.tiendas, m.serverMgr, m.hayActualizacion, m.versionNueva, m.mensaje, m.ancho)
 
 	case domain.VistaAgregarTienda:
-		contenido = addstore.ViewAgregarTienda(m.addStore)
+		contenido = addstore.ViewAgregarTienda(m.addStore, m.ancho)
 
 	case domain.VistaSeleccionarMetodo:
 		contenido = addstore.ViewSeleccionarMetodo(m.addStore)
 
 	case domain.VistaInputGit:
-		contenido = addstore.ViewInputGit(m.addStore)
+		contenido = addstore.ViewInputGit(m.addStore, m.ancho)
 
 	case domain.VistaSeleccionarTienda:
-		contenido = selectstore.ViewSeleccionarTienda(m.selectStore)
+		contenido = selectstore.ViewSeleccionarTienda(m.selectStore, m.ancho)
 
 	case domain.VistaSeleccionarModo:
 		contenido = selectstore.ViewSeleccionarModo(m.selectStore, m.tiendaParaDev, m.serverMgr)
 
 	case domain.VistaLogs:
 		servidor := m.serverMgr.ObtenerServidor(m.tiendaParaDev.Nombre)
-		contenido = logs.View(m.logsView, servidor, m.tiendaParaDev, m.alto, m.mensaje)
+		contenido = logs.View(m.logsView, servidor, m.tiendaParaDev, m.alto, m.ancho, m.mensaje)
 
 	case domain.VistaServidores:
-		contenido = servers.View(m.serversView, m.serverMgr)
+		contenido = servers.View(m.serversView, m.serverMgr, m.ancho)
 
 	case domain.VistaPopup:
 		contenido = popup.View(m.popup, m.tiendaParaDev, m.serverMgr, m.ancho)
 
 	default:
-		return menu.View(m.menu, m.tiendas, m.serverMgr, m.hayActualizacion, m.versionNueva, m.mensaje)
+		return menu.View(m.menu, m.tiendas, m.serverMgr, m.hayActualizacion, m.versionNueva, m.mensaje, m.ancho)
 	}
 
 	return banner + "\n" + contenido
