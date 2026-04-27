@@ -9,6 +9,22 @@ permissions:
   contents: write
 
 jobs:
+  publish:
+    name: Publish to npm registry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Publish with bun
+        working-directory: bun
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          bun publish --access public
+
   release:
     name: Build & Release (${{ matrix.goos }}/${{ matrix.goarch }})
     runs-on: ubuntu-latest

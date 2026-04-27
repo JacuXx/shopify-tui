@@ -11,24 +11,19 @@ CLI interactivo tipo Vim para gestionar múltiples tiendas Shopify. Permite inic
 ## 🚀 Instalación
 
 ```bash
-npm install -g shopify-cli-tui
+bun add -g shopify-cli-tui --trust
 ```
 
 ## 🔄 Actualización
 
 ```bash
-npm update -g shopify-cli-tui
+bun add -g shopify-cli-tui --trust
 ```
-
-> Si el CLI te avisa de una nueva versión pero `npm update` no la instala, fuerza la instalación con:
-> ```bash
-> npm install -g shopify-cli-tui@latest
-> ```
 
 ## 🗑️ Desinstalar
 
 ```bash
-npm uninstall -g shopify-cli-tui
+bun remove -g shopify-cli-tui
 ```
 
 ## ▶️ Ejecutar
@@ -39,29 +34,29 @@ sho .
 
 > **Requisito:** Necesitas tener [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) instalado: `npm install -g @shopify/cli`
 
-### ⚠️ Si el comando `sho .` no se encuentra
+### ⚠️ Si el comando `sho` no se encuentra
 
-Si después de instalar aparece `command not found: sho`, es porque el directorio de npm global no está en tu PATH.
+Si después de instalar aparece `command not found: sho`, es porque el directorio bin de bun no está en tu PATH.
 
 **macOS / Linux:**
 ```bash
-# Ver dónde está el directorio bin de npm
-npm config get prefix
+# Ver dónde está el directorio bin de bun
+bun pm bin -g
 
 # Agregar al PATH (reemplaza la ruta si es diferente)
-export PATH="$HOME/.npm-global/bin:$PATH"
+export PATH="$HOME/.bun/bin:$PATH"
 
 # Hacerlo permanente (zsh)
-echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.zshrc
+echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 
 # Hacerlo permanente (bash)
-echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.bashrc
+echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
 **Windows:**
-Asegúrate de que npm está en el PATH del sistema o ejecuta desde PowerShell como administrador.
+Asegúrate de que `%USERPROFILE%\.bun\bin` está en el PATH del sistema o ejecuta desde PowerShell como administrador.
 
 ---
 
