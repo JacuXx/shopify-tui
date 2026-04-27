@@ -33,7 +33,7 @@ func View(s State, tiendas []domain.Tienda, serverMgr server.Manager, hayActuali
 		estiloVersion := lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFFF"))
 		estiloComando := lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF00"))
 		result += "\n\n" + estiloAviso.Render("Nueva version disponible: ") + estiloVersion.Render(versionNueva) + estiloAviso.Render(" (actual: "+version.Version+")")
-		result += "\n" + estiloAviso.Render("📦 Actualiza: ") + estiloComando.Render("bun add -g @jacuxx/shopify-tui --registry https://npm.jsr.io")
+		result += "\n" + estiloAviso.Render("📦 Actualiza: ") + estiloComando.Render("bun add -g @jsr/jacuxx__shopify-tui")
 	}
 
 	if mensaje != "" {
