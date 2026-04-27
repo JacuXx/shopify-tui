@@ -167,6 +167,16 @@ async function install(): Promise<void> {
       fs.chmodSync(destPath, 0o755);
     }
 
+    // Copiar binario directamente a ~/.bun/bin/sho para que esté en el PATH
+    const bunGlobalBin: string | null = getBunGlobalBin();
+    if (bunGlobalBin) {
+      const globalDest: string = path.join(bunGlobalBin, destName);
+      fs.copyFileSync(destPath, globalDest);
+      if (os.platform() !== 'win32') {
+        fs.chmodSync(globalDest, 0o755);
+      }
+    }
+
     console.log('✅ sho instalado correctamente!');
     setupPath();
     console.log('');
