@@ -21,7 +21,7 @@ function getBinaryPath(): string {
 
   if (!fs.existsSync(binaryPath)) {
     console.error('❌ Binario no encontrado:', binaryPath);
-    console.error('   Por favor reinstala el paquete: bun add -g @jacuxx/shopify-tui');
+    console.error('   Por favor reinstala el paquete: bun add -g @jacuxx/shopify-tui --registry https://npm.jsr.io');
     process.exit(1);
   }
 
