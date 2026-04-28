@@ -9,24 +9,24 @@ $ARCH = if ([System.Environment]::Is64BitOperatingSystem) {
   $cpu = (Get-CimInstance Win32_Processor).Architecture
   if ($cpu -eq 12) { "arm64" } else { "amd64" }
 } else {
-  Write-Host "❌ Arquitectura no soportada. Se requiere 64-bit."
+  Write-Host "ERROR: Arquitectura no soportada. Se requiere 64-bit."
   exit 1
 }
 
 # Get latest version from GitHub API
-Write-Host "🔍 Buscando última versión..."
+Write-Host "Buscando ultima version..."
 $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$REPO/releases/latest" -UseBasicParsing
 $VERSION = $release.tag_name -replace '^v', ''
 
 if (-not $VERSION) {
-  Write-Host "❌ No se pudo obtener la versión más reciente."
+  Write-Host "ERROR: No se pudo obtener la version mas reciente."
   exit 1
 }
 
 $BINARY_NAME = "shopify-tui-windows-$ARCH.exe"
 $DOWNLOAD_URL = "https://github.com/$REPO/releases/download/v$VERSION/$BINARY_NAME"
 
-Write-Host "📦 Descargando sho v$VERSION para windows/$ARCH..."
+Write-Host "Descargando sho v$VERSION para windows/$ARCH..."
 
 # Create install dir if needed
 if (-not (Test-Path $INSTALL_DIR)) {
@@ -41,10 +41,10 @@ $USER_PATH = [System.Environment]::GetEnvironmentVariable("PATH", "User")
 if ($USER_PATH -notlike "*$INSTALL_DIR*") {
   [System.Environment]::SetEnvironmentVariable("PATH", "$INSTALL_DIR;$USER_PATH", "User")
   Write-Host ""
-  Write-Host "✅ PATH configurado: $INSTALL_DIR"
+  Write-Host "PATH configurado: $INSTALL_DIR"
   Write-Host "   Reinicia tu terminal para que tome efecto."
 }
 
-Write-Host "✅ sho v$VERSION instalado en $DEST"
+Write-Host "OK: sho v$VERSION instalado en $DEST"
 Write-Host ""
-Write-Host "🚀 Ejecuta: sho"
+Write-Host "Ejecuta: sho"
