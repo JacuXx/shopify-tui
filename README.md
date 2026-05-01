@@ -4,9 +4,40 @@
   <img src="https://img.shields.io/github/v/release/JacuXx/shopify-tui?style=flat-square&color=blue" alt="version">
   <img src="https://img.shields.io/github/license/JacuXx/shopify-tui?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey?style=flat-square" alt="platform">
+  <img src="https://img.shields.io/badge/status-activo-brightgreen?style=flat-square" alt="status">
 </p>
 
 CLI interactivo tipo Vim para gestionar múltiples tiendas Shopify. Permite iniciar sesión, guardar tiendas con sus archivos de tema (via Shopify Pull o Git Clone), ejecutar servidores de desarrollo en background y ver logs en tiempo real.
+
+---
+
+## 📋 Tabla de Contenidos
+
+- [Demo](#-demo)
+- [Instalación](#-instalación)
+- [Actualización](#-actualización)
+- [Desinstalar](#️-desinstalar)
+- [Ejecutar](#️-ejecutar)
+- [Características](#-características)
+- [Atajos de Teclado](#️-atajos-de-teclado)
+- [Configuración](#-configuración)
+- [Arquitectura](#️-arquitectura-elm-architecture)
+- [Dependencias](#-dependencias)
+- [Desarrollo Local](#️-desarrollo-local)
+- [Changelog](#-changelog)
+- [Autor](#-autor)
+- [Licencia](#-licencia)
+
+---
+
+## 🎬 Demo
+
+<p align="center">
+  <!-- Reemplaza con un GIF de demostración: <img src="docs/demo.gif" alt="Demo" width="700"> -->
+  <em>GIF de demo próximamente...</em>
+</p>
+
+---
 
 ## 🚀 Instalación
 
@@ -289,6 +320,14 @@ go build -o sho .
 - 📤 Theme Push para subir cambios
 - 📝 Abrir editor (VS Code) y terminal integrada
 - ⌨️ Navegación tipo Vim
+
+---
+
+## 👤 Autor
+
+**Alan Reynoso (JacuXx)**
+
+- GitHub: [@JacuXx](https://github.com/JacuXx)
 
 ---
 
