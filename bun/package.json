@@ -1,6 +1,6 @@
 {
   "name": "@jacuxx/shopify-tui",
-  "version": "2.1.13",
+  "version": "2.1.14",
   "description": "CLI interactivo tipo Vim para gestionar tiendas Shopify",
   "bin": {
     "sho": "bin/cli.ts"
@@ -30,7 +30,4 @@
   "devDependencies": {
     "@types/node": "^25.6.1"
   },
-  "dependencies": {
-    "@jacuxx/shopify-tui": "npm:@jsr/jacuxx__shopify-tui"
-  }
 }
