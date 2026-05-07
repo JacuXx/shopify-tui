@@ -33,12 +33,13 @@ func View(s State, tiendas []domain.Tienda, serverMgr server.Manager, hayActuali
 		estiloVersion := lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFFF"))
 		estiloComando := lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF00"))
 		result += "\n\n" + estiloAviso.Render("Nueva version disponible: ") + estiloVersion.Render(versionNueva) + estiloAviso.Render(" (actual: "+version.Version+")")
-		result += "\n" + estiloAviso.Render("📦 Actualiza: ") + estiloComando.Render("curl -fsSL https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.sh | sh")
+		const updateCmd = "curl -fsSL https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.sh | sh"
+		result += "\n" + estiloAviso.Render("Actualiza: ") + "\n" + estiloComando.Render(updateCmd)
 	}
 
 	if mensaje != "" {
 		result += "\n"
-		if strings.HasPrefix(mensaje, "✅") || strings.HasPrefix(mensaje, icons.Icons.Success) {
+		if strings.HasPrefix(mensaje, icons.Icons.Success) {
 			result += styles.Exito.Render(mensaje)
 		} else {
 			result += styles.Error.Render(mensaje)

@@ -127,10 +127,17 @@ func buildGrid(text []rune) (grid [][]bool, totalCols int) {
 	return
 }
 
-// RenderBanner renderiza el banner adaptándose al ancho disponible.
-// >= 84 cols: banner completo (logo + fuente pixel)
-// >= 64 cols: solo fuente pixel (sin logo)
-// <  64 cols: texto plano estilizado
+func BannerHeight(ancho int) int {
+	switch {
+	case ancho > 0 && ancho < 64:
+		return 3
+	case ancho > 0 && ancho < 84:
+		return 9
+	default:
+		return 12
+	}
+}
+
 func RenderBanner(ancho int) string {
 	if ancho > 0 && ancho < 64 {
 		return renderBannerMinimal()
@@ -166,11 +173,7 @@ func renderBannerCompacto() string {
 	renderCols := totalCols + 1
 
 	var banner strings.Builder
-
-	promptStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#96BF48")).
-		Bold(true)
-	banner.WriteString(promptStyle.Render(">") + "\n\n")
+	banner.WriteString("\n")
 
 	for row := range renderRows {
 		for col := range renderCols {
@@ -221,11 +224,7 @@ func renderBannerCompleto() string {
 	textStartRow := logoTermRows - renderRows
 
 	var banner strings.Builder
-
-	promptStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#96BF48")).
-		Bold(true)
-	banner.WriteString(promptStyle.Render(">") + "\n\n")
+	banner.WriteString("\n")
 
 	for row := range logoTermRows {
 		banner.WriteString(logoRows[row])

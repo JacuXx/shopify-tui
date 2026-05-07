@@ -86,7 +86,7 @@ func View(s State, servidor *server.ServidorActivo, tiendaParaDev domain.Tienda,
 	b.WriteString("\n")
 
 	if mensaje != "" {
-		if strings.HasPrefix(mensaje, "✅") || strings.HasPrefix(mensaje, "🛑") {
+		if strings.HasPrefix(mensaje, icons.Icons.Success) || strings.HasPrefix(mensaje, icons.Icons.Stop) {
 			b.WriteString(styles.Exito.Render(mensaje))
 		} else {
 			b.WriteString(styles.Error.Render(mensaje))

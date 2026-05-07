@@ -50,7 +50,7 @@ func View(s State, serverMgr server.Manager, ancho int) string {
 	}
 
 	if s.Mensaje != "" {
-		if strings.HasPrefix(s.Mensaje, "✅") {
+		if strings.HasPrefix(s.Mensaje, icons.Icons.Success) {
 			b.WriteString(styles.Exito.Render(s.Mensaje))
 		} else {
 			b.WriteString(styles.Error.Render(s.Mensaje))

@@ -29,8 +29,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if anchoLista < 20 {
 				anchoLista = 20
 			}
-			alturaBanner := 12
-			altoLista := msg.Height - alturaBanner
+			altoLista := msg.Height - components.BannerHeight(msg.Width) - 5
 			if altoLista < 5 {
 				altoLista = 5
 			}

@@ -54,22 +54,12 @@ func (i ItemTienda) Description() string {
 
 func (i ItemTienda) FilterValue() string { return i.Tienda.Nombre }
 
-// CrearLista construye un list.Model configurado con los parámetros dados.
 func CrearLista(items []list.Item, titulo string, ancho, alto int) list.Model {
-	// Si hay alto definido, restamos espacio para el banner (aprox 7-8 líneas)
-	// y el margen inferior.
-	alturaBanner := 8
-	alturaDisponible := alto - alturaBanner - 4
-
-	alturaItems := len(items)*2 + 6
-	if alto > 0 && alturaDisponible > alturaItems {
-		alturaItems = alturaDisponible
-	}
-
-	if alturaItems < 10 && alto > 15 {
-		alturaItems = 10
-	} else if alto <= 15 {
-		alturaItems = alto - 2
+	alturaBanner := BannerHeight(ancho)
+	const margenInferior = 5
+	alturaItems := alto - alturaBanner - margenInferior
+	if alturaItems < 5 {
+		alturaItems = 5
 	}
 
 	anchoLista := 60

@@ -54,7 +54,7 @@ func ViewSeleccionarModo(s State, tiendaParaDev domain.Tienda, serverMgr server.
 	b.WriteString("\n")
 
 	if s.Mensaje != "" {
-		if strings.HasPrefix(s.Mensaje, "✅") || strings.HasPrefix(s.Mensaje, icons.Icons.Success) {
+		if strings.HasPrefix(s.Mensaje, icons.Icons.Success) {
 			b.WriteString(styles.Exito.Render(s.Mensaje))
 		} else {
 			b.WriteString(styles.Error.Render(s.Mensaje))
