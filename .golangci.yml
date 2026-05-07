@@ -1,0 +1,23 @@
+linters:
+  disable-all: true
+  enable:
+    - govet     # análisis estático oficial de Go
+    - errcheck  # errores no verificados
+    - gofmt     # formato canónico
+    # misspell deshabilitado: codebase en español (falsos positivos)
+    # staticcheck deshabilitado: bubbletea usa API marcada como deprecated (SA1019)
+    # goimports deshabilitado: requiere configuración de local-prefixes por proyecto
+    # unused deshabilitado: CLI app exporta símbolos para uso futuro vía interfaces
+
+linters-settings:
+  errcheck:
+    exclude-functions:
+      - fmt.Println
+      - fmt.Printf
+      - fmt.Fprintln
+      - fmt.Fprintf
+
+issues:
+  exclude-dirs:
+    - releases
+    - vendor

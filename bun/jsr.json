@@ -1,0 +1,9 @@
+{
+  "name": "@jacuxx/shopify-tui",
+  "version": "2.1.11",
+  "license": "MIT",
+  "exports": "./bin/cli.ts",
+  "publish": {
+    "include": ["bin/cli.ts", "scripts/", "package.json", "bunfig.toml"]
+  }
+}
