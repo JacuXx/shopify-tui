@@ -4,6 +4,8 @@ Interactive TUI (Terminal UI) for managing multiple Shopify development servers 
 
 ## Installation
 
+> **Recommended method** — use the install script below. The JSR/npm package is published for discoverability only and is not the recommended installation path.
+
 **macOS / Linux:**
 ```sh
 curl -fsSL https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.sh | sh
