@@ -16,20 +16,15 @@ iwr https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.ps1 | iex
 
 ## Usage
 
-Run directly with Bun (no install required):
-
 ```sh
-bunx jsr:@jacuxx/shopify-tui
-```
-
-Or install globally and run:
-
-```sh
-bun install -g jsr:@jacuxx/shopify-tui
 sho
 ```
 
-> **Requirement:** [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) must be installed: `npm install -g @shopify/cli`
+> **Requirement:** [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) must be installed:
+
+```sh
+npm install -g @shopify/cli
+```
 
 ## Features
 
