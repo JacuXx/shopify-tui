@@ -12,8 +12,12 @@ import (
 )
 
 // ViewSeleccionarTienda renderiza la vista de selección de tienda.
-func ViewSeleccionarTienda(s State) string {
-	return styles.Contenedor.Render(s.Lista.View())
+func ViewSeleccionarTienda(s State, ancho int) string {
+	contenedor := styles.Contenedor
+	if ancho > 0 {
+		contenedor = contenedor.MaxWidth(ancho)
+	}
+	return contenedor.Render(s.Lista.View())
 }
 
 // ViewSeleccionarModo renderiza la vista de selección de modo de desarrollo.
@@ -50,7 +54,7 @@ func ViewSeleccionarModo(s State, tiendaParaDev domain.Tienda, serverMgr server.
 	b.WriteString("\n")
 
 	if s.Mensaje != "" {
-		if strings.HasPrefix(s.Mensaje, "✅") || strings.HasPrefix(s.Mensaje, icons.Icons.Success) {
+		if strings.HasPrefix(s.Mensaje, icons.Icons.Success) {
 			b.WriteString(styles.Exito.Render(s.Mensaje))
 		} else {
 			b.WriteString(styles.Error.Render(s.Mensaje))

@@ -15,7 +15,7 @@ import (
 )
 
 // View renderiza la vista del menú principal completa (incluyendo banner).
-func View(s State, tiendas []domain.Tienda, serverMgr server.Manager, hayActualizacion bool, versionNueva, mensaje string) string {
+func View(s State, tiendas []domain.Tienda, serverMgr server.Manager, hayActualizacion bool, versionNueva, mensaje string, ancho int) string {
 	items := []components.ItemMenu{}
 	for _, item := range s.Lista.Items() {
 		if menuItem, ok := item.(components.ItemMenu); ok {
@@ -23,7 +23,7 @@ func View(s State, tiendas []domain.Tienda, serverMgr server.Manager, hayActuali
 		}
 	}
 
-	banner := components.RenderBanner()
+	banner := components.RenderBanner(ancho)
 	menuStr := renderMenuConAtajos(items, s.Lista.Index(), icons.Icons.App+" Configuración")
 
 	result := banner + "\n" + menuStr
@@ -33,12 +33,13 @@ func View(s State, tiendas []domain.Tienda, serverMgr server.Manager, hayActuali
 		estiloVersion := lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFFF"))
 		estiloComando := lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF00"))
 		result += "\n\n" + estiloAviso.Render("Nueva version disponible: ") + estiloVersion.Render(versionNueva) + estiloAviso.Render(" (actual: "+version.Version+")")
-		result += "\n" + estiloAviso.Render("📦 Actualiza: ") + estiloComando.Render("curl -fsSL https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.sh | sh")
+		const updateCmd = "curl -fsSL https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.sh | sh"
+		result += "\n" + estiloAviso.Render("Actualiza: ") + "\n" + estiloComando.Render(updateCmd)
 	}
 
 	if mensaje != "" {
 		result += "\n"
-		if strings.HasPrefix(mensaje, "✅") || strings.HasPrefix(mensaje, icons.Icons.Success) {
+		if strings.HasPrefix(mensaje, icons.Icons.Success) {
 			result += styles.Exito.Render(mensaje)
 		} else {
 			result += styles.Error.Render(mensaje)

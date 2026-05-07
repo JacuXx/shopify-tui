@@ -11,8 +11,13 @@ import (
 )
 
 // View renderiza la vista de servidores activos.
-func View(s State, serverMgr server.Manager) string {
+func View(s State, serverMgr server.Manager, ancho int) string {
 	var b strings.Builder
+
+	contenedor := styles.Contenedor
+	if ancho > 0 {
+		contenedor = contenedor.MaxWidth(ancho)
+	}
 
 	b.WriteString(styles.Titulo.Render(icons.Icons.Logs + " Servidores Activos"))
 	b.WriteString("\n\n")
@@ -25,7 +30,7 @@ func View(s State, serverMgr server.Manager) string {
 		b.WriteString(styles.Ayuda.Render("Inicia uno desde '" + icons.Icons.Rocket + " Iniciar servidor'"))
 		b.WriteString("\n\n")
 		b.WriteString(styles.Ayuda.Render("q: volver"))
-		return styles.Contenedor.Render(b.String())
+		return contenedor.Render(b.String())
 	}
 
 	for i, servidor := range servidores {
@@ -45,7 +50,7 @@ func View(s State, serverMgr server.Manager) string {
 	}
 
 	if s.Mensaje != "" {
-		if strings.HasPrefix(s.Mensaje, "✅") {
+		if strings.HasPrefix(s.Mensaje, icons.Icons.Success) {
 			b.WriteString(styles.Exito.Render(s.Mensaje))
 		} else {
 			b.WriteString(styles.Error.Render(s.Mensaje))
@@ -55,7 +60,7 @@ func View(s State, serverMgr server.Manager) string {
 
 	b.WriteString(styles.Ayuda.Render("s: detener | S: detener todos | q: volver"))
 
-	return styles.Contenedor.Render(b.String())
+	return contenedor.Render(b.String())
 }
 
 func formatearDuracion(inicio time.Time) string {

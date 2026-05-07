@@ -45,8 +45,12 @@ func View(s State, tiendaParaDev domain.Tienda, serverMgr server.Manager, ancho 
 	} else {
 		header.WriteString(styles.Error.Render(icons.Icons.Stop + " " + tiendaParaDev.Nombre + " - Detenido"))
 	}
+	sepAncho := 50
+	if ancho > 0 && ancho-2 < sepAncho {
+		sepAncho = ancho - 2
+	}
 	header.WriteString("\n")
-	header.WriteString(strings.Repeat("-", 50))
+	header.WriteString(strings.Repeat("-", sepAncho))
 	header.WriteString("\n\n")
 
 	popupAncho := lipgloss.Width(popupRendered)

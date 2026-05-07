@@ -127,7 +127,86 @@ func buildGrid(text []rune) (grid [][]bool, totalCols int) {
 	return
 }
 
-func RenderBanner() string {
+func BannerHeight(ancho int) int {
+	switch {
+	case ancho > 0 && ancho < 64:
+		return 3
+	case ancho > 0 && ancho < 84:
+		return 9
+	default:
+		return 12
+	}
+}
+
+func RenderBanner(ancho int) string {
+	if ancho > 0 && ancho < 64 {
+		return renderBannerMinimal()
+	}
+	if ancho > 0 && ancho < 84 {
+		return renderBannerCompacto()
+	}
+	return renderBannerCompleto()
+}
+
+func renderBannerMinimal() string {
+	var b strings.Builder
+	titleStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#96BF48")).
+		Bold(true)
+	subtitleStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#888888")).
+		Italic(true)
+	b.WriteString(titleStyle.Render("SHOPIFY TUI") + "\n")
+	b.WriteString(subtitleStyle.Render("store manager — terminal edition") + "\n")
+	return b.String()
+}
+
+func renderBannerCompacto() string {
+	text := []rune("SHOPIFY TUI")
+
+	startColor, _ := colorful.Hex("#5E8E3E")
+	endColor, _ := colorful.Hex("#96BF48")
+	shadowColor := lipgloss.Color("#1a3a10")
+
+	grid, totalCols := buildGrid(text)
+	renderRows := charHeight + 1
+	renderCols := totalCols + 1
+
+	var banner strings.Builder
+	banner.WriteString("\n")
+
+	for row := range renderRows {
+		for col := range renderCols {
+			mainOn := row < charHeight && col < totalCols && grid[row][col]
+			shadowOn := row > 0 && col > 0 &&
+				(row-1) < charHeight && (col-1) < totalCols &&
+				grid[row-1][col-1]
+
+			t := float64(col) / float64(totalCols-1)
+			c := lerpColor(startColor, endColor, t)
+			bold := lipgloss.NewStyle().Foreground(lipgloss.Color(colorToHex(c))).Bold(true)
+
+			switch {
+			case mainOn:
+				banner.WriteString(bold.Render("█"))
+			case shadowOn:
+				banner.WriteString(lipgloss.NewStyle().Foreground(shadowColor).Render("░"))
+			default:
+				banner.WriteString(" ")
+			}
+		}
+		banner.WriteString("\n")
+	}
+
+	subtitleStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#888888")).
+		Italic(true)
+	banner.WriteString(subtitleStyle.Render("  Shopify store manager — terminal edition") + "\n")
+
+	return banner.String()
+}
+
+func renderBannerCompleto() string {
 	text := []rune("SHOPIFY TUI")
 
 	startColor, _ := colorful.Hex("#5E8E3E")
@@ -145,11 +224,7 @@ func RenderBanner() string {
 	textStartRow := logoTermRows - renderRows
 
 	var banner strings.Builder
-
-	promptStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#96BF48")).
-		Bold(true)
-	banner.WriteString(promptStyle.Render(">") + "\n\n")
+	banner.WriteString("\n")
 
 	for row := range logoTermRows {
 		banner.WriteString(logoRows[row])

@@ -33,7 +33,7 @@ func Update(s State, msg tea.Msg, serverMgr server.Manager) (State, tea.Cmd) {
 
 		case "S":
 			serverMgr.DetenerTodos()
-			s.Mensaje = "✅ Todos los servidores detenidos"
+			s.Mensaje = icons.IconSuccess("Todos los servidores detenidos")
 			return s, nil
 
 		case "j", "down":
