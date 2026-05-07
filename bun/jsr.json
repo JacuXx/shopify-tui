@@ -4,6 +4,6 @@
   "license": "MIT",
   "exports": "./bin/cli.ts",
   "publish": {
-    "include": ["bin/cli.ts", "scripts/", "package.json", "bunfig.toml"]
+    "include": ["bin/cli.ts", "scripts/", "package.json", "bunfig.toml", "README.md"]
   }
 }
