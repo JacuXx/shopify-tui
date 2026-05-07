@@ -16,7 +16,16 @@ iwr https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.ps1 | iex
 
 ## Usage
 
-```bash
+Run directly with Bun (no install required):
+
+```sh
+bunx jsr:@jacuxx/shopify-tui
+```
+
+Or install globally and run:
+
+```sh
+bun install -g jsr:@jacuxx/shopify-tui
 sho
 ```
 
