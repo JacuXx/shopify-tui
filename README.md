@@ -1,14 +1,45 @@
-# 🛒 Shopify CLI TUI
+<h1 align="center">Shopify CLI TUI</h1>
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/JacuXx/shopify-tui?style=flat-square&color=blue" alt="version">
   <img src="https://img.shields.io/github/license/JacuXx/shopify-tui?style=flat-square" alt="license">
   <img src="https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey?style=flat-square" alt="platform">
+  <img src="https://img.shields.io/badge/status-activo-brightgreen?style=flat-square" alt="status">
 </p>
 
 CLI interactivo tipo Vim para gestionar múltiples tiendas Shopify. Permite iniciar sesión, guardar tiendas con sus archivos de tema (via Shopify Pull o Git Clone), ejecutar servidores de desarrollo en background y ver logs en tiempo real.
 
-## 🚀 Instalación
+---
+
+## Tabla de Contenidos
+
+- [Demo](#demo)
+- [Instalación](#instalación)
+- [Actualización](#actualización)
+- [Desinstalar](#desinstalar)
+- [Ejecutar](#ejecutar)
+- [Características](#características)
+- [Atajos de Teclado](#atajos-de-teclado)
+- [Configuración](#configuración)
+- [Arquitectura](#arquitectura-elm-architecture)
+- [Dependencias](#dependencias)
+- [Desarrollo Local](#desarrollo-local)
+- [Changelog](#changelog)
+- [Autor](#autor)
+- [Licencia](#licencia)
+
+---
+
+## Demo
+
+<p align="center">
+  <!-- Reemplaza con un GIF de demostración: <img src="docs/demo.gif" alt="Demo" width="700"> -->
+  <em>GIF de demo próximamente...</em>
+</p>
+
+---
+
+## Instalación
 
 **macOS / Linux:**
 ```sh
@@ -20,7 +51,7 @@ curl -fsSL https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.sh 
 iwr https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.ps1 | iex
 ```
 
-## 🔄 Actualización
+## Actualización
 
 Ejecuta el mismo comando de instalación — siempre descarga la versión más reciente y sobreescribe el binario anterior.
 
@@ -34,7 +65,7 @@ curl -fsSL https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.sh 
 iwr https://raw.githubusercontent.com/JacuXx/shopify-tui/main/install.ps1 | iex
 ```
 
-## 🗑️ Desinstalar
+## Desinstalar
 
 **macOS / Linux:**
 ```sh
@@ -46,7 +77,7 @@ sudo rm /usr/local/bin/sho
 Remove-Item "$env:USERPROFILE\.local\bin\sho.exe"
 ```
 
-## ▶️ Ejecutar
+## Ejecutar
 
 ```bash
 sho
@@ -54,7 +85,7 @@ sho
 
 > **Requisito:** Necesitas tener [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) instalado: `npm install -g @shopify/cli`
 
-## 🔍 Verificar versión instalada
+## Verificar versión instalada
 
 ```bash
 sho --version
@@ -62,27 +93,27 @@ sho --version
 
 ---
 
-## ✨ Características
+## Características
 
-- 🔐 **Login con Shopify** - Autenticación OAuth vía navegador
-- 📦 **Gestión de tiendas** - Guarda múltiples tiendas para acceso rápido
-- 🚀 **Flujo ultra rápido** - Selecciona tienda → servidor inicia automáticamente
-- 📋 **Popup flotante** - Menú flotante con `space` o `m` para acciones rápidas
-- 🔔 **Notificación de actualizaciones** - Aviso cuando hay nueva versión disponible
-- 📝 **URL simplificado** - Solo escribe el nombre, `.myshopify.com` se agrega solo
-- 📥 **Shopify Pull** - Descarga temas directamente desde Shopify
-- 📤 **Theme Push** - Sube cambios al tema
-- 🔗 **Git Clone** - Clona temas desde repositorios Git (SSH o HTTPS)
-- 🚀 **Servidores en Background** - Ejecuta múltiples servidores simultáneamente
-- 📊 **Logs en Tiempo Real** - Visualiza logs interactivos con scroll
-- 📝 **Abrir Editor** - Abre VS Code en el directorio del tema
-- 💻 **Terminal Integrada** - Abre terminal para comandos adicionales
-- ⌨️ **Navegación tipo Vim** - j/k para navegar, l/Enter para seleccionar
-- 🎨 **Nerd Font Icons** - Iconos bonitos con fallback ASCII automático
+- **Login con Shopify** - Autenticación OAuth vía navegador
+- **Gestión de tiendas** - Guarda múltiples tiendas para acceso rápido
+- **Flujo ultra rápido** - Selecciona tienda → servidor inicia automáticamente
+- **Popup flotante** - Menú flotante con `space` o `m` para acciones rápidas
+- **Notificación de actualizaciones** - Aviso cuando hay nueva versión disponible
+- **URL simplificado** - Solo escribe el nombre, `.myshopify.com` se agrega solo
+- **Shopify Pull** - Descarga temas directamente desde Shopify
+- **Theme Push** - Sube cambios al tema
+- **Git Clone** - Clona temas desde repositorios Git (SSH o HTTPS)
+- **Servidores en Background** - Ejecuta múltiples servidores simultáneamente
+- **Logs en Tiempo Real** - Visualiza logs interactivos con scroll
+- **Abrir Editor** - Abre VS Code en el directorio del tema
+- **Terminal Integrada** - Abre terminal para comandos adicionales
+- **Navegación tipo Vim** - j/k para navegar, l/Enter para seleccionar
+- **Nerd Font Icons** - Iconos bonitos con fallback ASCII automático
 
 ---
 
-## ⌨️ Atajos de Teclado
+## Atajos de Teclado
 
 ### Menú Principal
 | Tecla | Acción |
@@ -160,7 +191,7 @@ sho --version
 
 ---
 
-## 📂 Configuración
+## Configuración
 
 Las tiendas y sus archivos se guardan en:
 ```
@@ -196,7 +227,7 @@ Ejemplo del archivo `stores.json`:
 
 ---
 
-## 🏗️ Arquitectura (Elm Architecture)
+## Arquitectura (Elm Architecture)
 
 Este proyecto usa **Bubbletea** que implementa el patrón Elm Architecture:
 
@@ -231,7 +262,7 @@ Este proyecto usa **Bubbletea** que implementa el patrón Elm Architecture:
 
 ---
 
-## 🔧 Dependencias
+## Dependencias
 
 - [Bubbletea](https://github.com/charmbracelet/bubbletea) - Framework TUI
 - [Bubbles](https://github.com/charmbracelet/bubbles) - Componentes (listas, inputs)
@@ -239,7 +270,9 @@ Este proyecto usa **Bubbletea** que implementa el patrón Elm Architecture:
 
 ---
 
-## 🛠️ Desarrollo Local
+## Desarrollo Local
+
+> **Requisito:** Necesitas tener [Go](https://go.dev/dl/) instalado.
 
 ```bash
 # Clonar el repositorio
@@ -255,49 +288,57 @@ go build -o sho .
 
 ---
 
-## 📝 Changelog
+## Changelog
 
-### v2.1.x
-- 📦 Distribución vía scripts `install.sh` / `install.ps1` (binarios desde GitHub Releases)
-- 🔍 `sho --version` / `sho -v` para verificar versión instalada
-- 🔔 Notificación de actualización muestra comando `curl` directamente en el TUI
+### v2.1.11
+- Distribución vía scripts `install.sh` / `install.ps1` (binarios desde GitHub Releases)
+- `sho --version` / `sho -v` para verificar versión instalada
+- Notificación de actualización muestra comando `curl` directamente en el TUI
 
 ### v1.4.0
-- 📝 **URL simplificado** - Solo escribe el nombre de la tienda, `.myshopify.com` se agrega automáticamente
-- 🔔 **Notificación de actualizaciones** - Aviso en el menú principal cuando hay nueva versión
-- 🎨 Sufijo `.myshopify.com` se muestra fijo en color cyan al agregar tienda
+- **URL simplificado** - Solo escribe el nombre de la tienda, `.myshopify.com` se agrega automáticamente
+- **Notificación de actualizaciones** - Aviso en el menú principal cuando hay nueva versión
+- Sufijo `.myshopify.com` se muestra fijo en color cyan al agregar tienda
 
 ### v1.3.0
-- 🚀 **Flujo ultra rápido** - Seleccionar tienda inicia servidor automáticamente
-- 📋 **Popup flotante** - Presiona `space` o `m` para menú de acciones rápidas
-- 🔄 Después de Pull/Push/Editor/Terminal regresa a los logs
-- ⌨️ Atajos directos: A/T/D/V en menú, 1-9 para tiendas
+- **Flujo ultra rápido** - Seleccionar tienda inicia servidor automáticamente
+- **Popup flotante** - Presiona `space` o `m` para menú de acciones rápidas
+- Después de Pull/Push/Editor/Terminal regresa a los logs
+- Atajos directos: A/T/D/V en menú, 1-9 para tiendas
 
 ### v1.2.0
-- ✨ Modo selección mejorado - bloquea toda interactividad excepto `v` para salir
-- 🐛 Eliminado Ctrl+C como atajo de cierre (ahora solo `Ctrl+Q`)
-- 📋 Permite copiar texto con Ctrl+Shift+C en modo selección
+- Modo selección mejorado - bloquea toda interactividad excepto `v` para salir
+- Eliminado Ctrl+C como atajo de cierre (ahora solo `Ctrl+Q`)
+- Permite copiar texto con Ctrl+Shift+C en modo selección
 
 ### v1.1.0
-- 🎨 Sistema de iconos Nerd Font con fallback ASCII
-- 📜 Scroll mejorado en vista de logs (j/k, flechas, PgUp/PgDn, mouse wheel, g/G)
-- ✨ Modo selección con tecla `v` para copiar texto
+- Sistema de iconos Nerd Font con fallback ASCII
+- Scroll mejorado en vista de logs (j/k, flechas, PgUp/PgDn, mouse wheel, g/G)
+- Modo selección con tecla `v` para copiar texto
 
 ### v1.0.0
-- 🚀 Servidores en background con logs en tiempo real
-- 📥 Soporte para Shopify Pull y Git Clone
-- 📤 Theme Push para subir cambios
-- 📝 Abrir editor (VS Code) y terminal integrada
-- ⌨️ Navegación tipo Vim
+- Servidores en background con logs en tiempo real
+- Soporte para Shopify Pull y Git Clone
+- Theme Push para subir cambios
+- Abrir editor (VS Code) y terminal integrada
+- Navegación tipo Vim
 
 ---
 
-## 📄 Licencia
+## Autor
+
+**Alan Reynoso (JacuXx)**
+
+- GitHub: [@JacuXx](https://github.com/JacuXx)
+
+---
+
+## Licencia
 
 MIT © [JacuXx](https://github.com/JacuXx)
 
 ---
 
 <p align="center">
-  Hecho con ❤️ usando <a href="https://github.com/charmbracelet/bubbletea">Bubbletea</a>
+  Hecho con <a href="https://github.com/charmbracelet/bubbletea">Bubbletea</a>
 </p>

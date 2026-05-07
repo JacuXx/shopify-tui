@@ -38,3 +38,5 @@ Thumbs.db
 
 # Archivos de configuración local (opcional, descomenta si no quieres subir tu config)
 # ~/.config/shopify-tui/
+
+/claude
