@@ -1,5 +1,15 @@
 #!/usr/bin/env bun
 
+/**
+ * @module
+ * CLI entrypoint for `@jacuxx/shopify-tui`.
+ *
+ * Detects the current platform, resolves the path to the prebuilt binary,
+ * and forwards all arguments to it via `execFileSync`.
+ *
+ * Supported platforms: `darwin` (arm64, amd64), `linux` (arm64, amd64), `win32`.
+ */
+
 import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import path from 'path';

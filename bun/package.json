@@ -26,5 +26,8 @@
   "type": "module",
   "engines": {
     "bun": ">=1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.1"
   }
 }
