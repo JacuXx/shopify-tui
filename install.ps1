@@ -28,7 +28,6 @@ $DOWNLOAD_URL = "https://github.com/$REPO/releases/download/v$VERSION/$BINARY_NA
 
 Write-Host "Descargando sho v$VERSION para windows/$ARCH..."
 
-# Create install dir if needed
 if (-not (Test-Path $INSTALL_DIR)) {
   New-Item -ItemType Directory -Path $INSTALL_DIR -Force | Out-Null
 }
@@ -36,7 +35,6 @@ if (-not (Test-Path $INSTALL_DIR)) {
 $DEST = Join-Path $INSTALL_DIR $BINARY
 Invoke-WebRequest -Uri $DOWNLOAD_URL -OutFile $DEST -UseBasicParsing
 
-# Add to PATH if not already there
 $USER_PATH = [System.Environment]::GetEnvironmentVariable("PATH", "User")
 if ($USER_PATH -notlike "*$INSTALL_DIR*") {
   [System.Environment]::SetEnvironmentVariable("PATH", "$INSTALL_DIR;$USER_PATH", "User")
@@ -46,5 +44,12 @@ if ($USER_PATH -notlike "*$INSTALL_DIR*") {
 }
 
 Write-Host "OK: sho v$VERSION instalado en $DEST"
+
+$BUN_BIN = Join-Path $env:USERPROFILE ".bun\bin\sho.exe"
+if (Test-Path $BUN_BIN) {
+  Copy-Item -Path $DEST -Destination $BUN_BIN -Force
+  Write-Host "sho actualizado tambien en $BUN_BIN"
+}
+
 Write-Host ""
 Write-Host "Ejecuta: sho"
