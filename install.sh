@@ -48,6 +48,25 @@ echo "Descargando sho v${VERSION} para ${PLATFORM}/${ARCH}..."
 
 TMP_FILE=$(mktemp)
 curl -fsSL "$DOWNLOAD_URL" -o "$TMP_FILE"
+
+CHECKSUM_URL="https://github.com/${REPO}/releases/download/v${VERSION}/${BINARY_NAME}.sha256"
+EXPECTED=$(curl -fsSL "$CHECKSUM_URL")
+if [ -z "$EXPECTED" ]; then
+  echo "Error: No se pudo obtener el checksum de verificacion."
+  rm -f "$TMP_FILE"
+  exit 1
+fi
+if command -v sha256sum > /dev/null 2>&1; then
+  COMPUTED=$(sha256sum "$TMP_FILE" | awk '{print $1}')
+else
+  COMPUTED=$(shasum -a 256 "$TMP_FILE" | awk '{print $1}')
+fi
+if [ "$COMPUTED" != "$EXPECTED" ]; then
+  echo "Error: Verificacion de integridad fallida. El binario puede estar corrupto."
+  rm -f "$TMP_FILE"
+  exit 1
+fi
+
 chmod +x "$TMP_FILE"
 
 if [ -w "$INSTALL_DIR" ]; then

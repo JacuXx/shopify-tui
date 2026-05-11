@@ -2,6 +2,7 @@ package selectstore
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -15,8 +16,6 @@ import (
 	"github.com/JacuXx/shopify-cli/internal/ui/icons"
 )
 
-// UpdateSeleccionarTienda maneja los eventos de la vista de selección de tienda.
-// Retorna el estado actualizado, un comando, y el slice de tiendas (puede mutar por borrado).
 func UpdateSeleccionarTienda(s State, msg tea.Msg, tiendas []domain.Tienda, serverMgr server.Manager, storeRepo store.Repository, ancho, alto int) (State, tea.Cmd, []domain.Tienda) {
 	if s.Lista.FilterState() == list.Filtering {
 		var cmd tea.Cmd
@@ -56,6 +55,14 @@ func UpdateSeleccionarTienda(s State, msg tea.Msg, tiendas []domain.Tienda, serv
 					rutaEliminada := tienda.Ruta
 
 					if rutaEliminada != "" {
+						home, _ := os.UserHomeDir()
+						dirStores := filepath.Join(home, ".config", "shopify-tui", "stores")
+						absStores, _ := filepath.Abs(dirStores)
+						absRuta, _ := filepath.Abs(rutaEliminada)
+						if !strings.HasPrefix(absRuta, absStores+string(filepath.Separator)) {
+							s.Mensaje = icons.IconError("Ruta de tienda inválida, no se eliminó")
+							return s, nil, tiendas
+						}
 						if err := os.RemoveAll(rutaEliminada); err != nil {
 							s.Mensaje = icons.IconError("Error al eliminar archivos: " + err.Error())
 							return s, nil, tiendas

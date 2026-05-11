@@ -64,6 +64,9 @@ jobs:
           [ "$GOOS" = "windows" ] && ext=".exe"
           go build -ldflags="-s -w" \
             -o "releases/shopify-tui-${{ matrix.suffix }}${ext}" .
+          sha256sum "releases/shopify-tui-${{ matrix.suffix }}${ext}" \
+            | awk '{print $1}' \
+            > "releases/shopify-tui-${{ matrix.suffix }}${ext}.sha256"
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2

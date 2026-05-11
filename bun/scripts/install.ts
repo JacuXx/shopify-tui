@@ -99,17 +99,21 @@ function setupPath(): void {
 
   if (os.platform() === 'win32') {
     if (isInPath(bunBin)) return;
+    if (!/^[a-zA-Z]:\\[\w\\ .\-]+$/.test(bunBin)) {
+      console.log(`Ruta de bun inválida, no se configuró el PATH: ${bunBin}`);
+      return;
+    }
     try {
       execSync(
         `powershell -Command "[System.Environment]::SetEnvironmentVariable('PATH', [System.Environment]::GetEnvironmentVariable('PATH','User') + ';${bunBin}', 'User')"`,
         { encoding: 'utf8' }
       );
       console.log('');
-      console.log(`✅ PATH configurado: ${bunBin}`);
+      console.log(`PATH configurado: ${bunBin}`);
       console.log('   Reinicia tu terminal para que tome efecto.');
     } catch (_e) {
       console.log('');
-      console.log(`⚠️  Agrega manualmente a tu PATH de usuario: ${bunBin}`);
+      console.log(`Agrega manualmente a tu PATH de usuario: ${bunBin}`);
     }
     return;
   }
@@ -119,7 +123,7 @@ function setupPath(): void {
   const configFile: string | null = getShellConfigFile();
   if (!configFile) {
     console.log('');
-    console.log('⚠️  El directorio de bun no está en tu PATH.');
+    console.log('El directorio de bun no está en tu PATH.');
     console.log(`   export PATH="${bunBin}:$PATH"`);
     return;
   }
@@ -135,12 +139,12 @@ function setupPath(): void {
 
     fs.appendFileSync(configFile, `\n# Agregado por shopify-tui\n${exportLine}\n`);
     console.log('');
-    console.log(`✅ PATH configurado automáticamente en ${path.basename(configFile)}`);
+    console.log(`PATH configurado automáticamente en ${path.basename(configFile)}`);
     console.log('   Reinicia tu terminal o ejecuta:');
     console.log(`   source ${configFile}`);
   } catch (_err) {
     console.log('');
-    console.log('⚠️  No se pudo configurar el PATH automáticamente.');
+    console.log('No se pudo configurar el PATH automáticamente.');
     console.log(`   Agrega esta línea a ${configFile}:`);
     console.log(`   ${exportLine}`);
   }
@@ -158,7 +162,7 @@ async function install(): Promise<void> {
 
   const downloadUrl = `https://github.com/${REPO}/releases/download/v${VERSION}/${binaryName}`;
 
-  console.log(`📦 Descargando sho v${VERSION} para ${os.platform()}/${os.arch()}...`);
+  console.log(`Descargando sho v${VERSION} para ${os.platform()}/${os.arch()}...`);
 
   try {
     await downloadFile(downloadUrl, destPath);
@@ -166,8 +170,6 @@ async function install(): Promise<void> {
     if (os.platform() !== 'win32') {
       fs.chmodSync(destPath, 0o755);
     }
-
-    // Copiar binario directamente a ~/.bun/bin/sho para que esté en el PATH
     const bunGlobalBin: string | null = getBunGlobalBin();
     if (bunGlobalBin) {
       const globalDest: string = path.join(bunGlobalBin, destName);
@@ -177,13 +179,13 @@ async function install(): Promise<void> {
       }
     }
 
-    console.log('✅ sho instalado correctamente!');
+    console.log('sho instalado correctamente!');
     setupPath();
     console.log('');
     console.log('🚀 Ejecuta: sho');
   } catch (err: unknown) {
     const error = err as Error;
-    console.error('❌ Error descargando binario:', error.message);
+    console.error('Error descargando binario:', error.message);
     console.error(`   URL: ${downloadUrl}`);
     process.exit(1);
   }
