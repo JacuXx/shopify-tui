@@ -35,6 +35,21 @@ if (-not (Test-Path $INSTALL_DIR)) {
 $DEST = Join-Path $INSTALL_DIR $BINARY
 Invoke-WebRequest -Uri $DOWNLOAD_URL -OutFile $DEST -UseBasicParsing
 
+$CHECKSUM_URL = "https://github.com/$REPO/releases/download/v$VERSION/$BINARY_NAME.sha256"
+try {
+  $EXPECTED = (Invoke-WebRequest -Uri $CHECKSUM_URL -UseBasicParsing).Content.Trim()
+} catch {
+  Write-Host "ERROR: No se pudo obtener el checksum de verificacion."
+  Remove-Item -Path $DEST -Force -ErrorAction SilentlyContinue
+  exit 1
+}
+$COMPUTED = (Get-FileHash -Path $DEST -Algorithm SHA256).Hash.ToLower()
+if ($COMPUTED -ne $EXPECTED) {
+  Write-Host "ERROR: Verificacion de integridad fallida. El binario puede estar corrupto."
+  Remove-Item -Path $DEST -Force
+  exit 1
+}
+
 $USER_PATH = [System.Environment]::GetEnvironmentVariable("PATH", "User")
 if ($USER_PATH -notlike "*$INSTALL_DIR*") {
   [System.Environment]::SetEnvironmentVariable("PATH", "$INSTALL_DIR;$USER_PATH", "User")
