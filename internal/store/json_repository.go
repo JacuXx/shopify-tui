@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -113,6 +114,10 @@ func (r *JSONRepository) CrearDirectorioTienda(nombre string) (string, error) {
 	}
 
 	nombreCarpeta := sanitizarNombre(nombre)
+	nombreCarpeta = strings.ReplaceAll(nombreCarpeta, "..", "")
+	if nombreCarpeta == "" {
+		return "", fmt.Errorf("nombre de tienda inválido")
+	}
 
 	dirStores, err := r.obtenerDirectorioStores()
 	if err != nil {
@@ -120,6 +125,12 @@ func (r *JSONRepository) CrearDirectorioTienda(nombre string) (string, error) {
 	}
 
 	rutaTienda := filepath.Join(dirStores, nombreCarpeta)
+
+	absStores, _ := filepath.Abs(dirStores)
+	absRuta, _ := filepath.Abs(rutaTienda)
+	if !strings.HasPrefix(absRuta, absStores+string(filepath.Separator)) {
+		return "", fmt.Errorf("nombre de tienda inválido")
+	}
 
 	if err := os.MkdirAll(rutaTienda, 0755); err != nil {
 		return "", err

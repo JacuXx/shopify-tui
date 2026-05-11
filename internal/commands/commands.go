@@ -12,6 +12,24 @@ import (
 	"github.com/JacuXx/shopify-cli/internal/ui/icons"
 )
 
+var shellsPermitidos = map[string]bool{
+	"/bin/zsh":      true,
+	"/bin/bash":     true,
+	"/bin/sh":       true,
+	"/usr/bin/zsh":  true,
+	"/usr/bin/bash": true,
+	"/usr/bin/sh":   true,
+}
+
+func esGitURLValida(u string) bool {
+	for _, prefix := range []string{"https://", "http://", "git://", "git@"} {
+		if strings.HasPrefix(u, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
 // ComandoTerminadoMsg se emite cuando un comando externo finaliza con éxito.
 type ComandoTerminadoMsg struct {
 	Resultado       string
@@ -39,7 +57,12 @@ func EjecutarShopifyLogin() tea.Cmd {
 func EjecutarDescargaConExec(tienda domain.Tienda, directorio string) tea.Cmd {
 	var cmd *exec.Cmd
 	if tienda.Metodo == domain.MetodoGitClone {
-		cmd = exec.Command("git", "clone", tienda.GitURL, ".")
+		if !esGitURLValida(tienda.GitURL) {
+			return func() tea.Msg {
+				return ErrorMsg{Err: fmt.Errorf("URL de repositorio inválida")}
+			}
+		}
+		cmd = exec.Command("git", "clone", "--", tienda.GitURL, ".")
 	} else {
 		cmd = exec.Command("shopify", "theme", "pull", "--store", tienda.URL, "--path", ".")
 	}
@@ -114,8 +137,8 @@ func EjecutarAbrirEditor(tienda domain.Tienda) tea.Cmd {
 // EjecutarAbrirTerminal abre una terminal interactiva en el directorio de la tienda.
 func EjecutarAbrirTerminal(tienda domain.Tienda) tea.Cmd {
 	shell := os.Getenv("SHELL")
-	if shell == "" {
-		shell = "zsh"
+	if !shellsPermitidos[shell] {
+		shell = "/bin/sh"
 	}
 
 	fmt.Println("\n╭─────────────────────────────────────────────────╮")
