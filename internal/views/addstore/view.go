@@ -109,7 +109,7 @@ func ViewInputGit(s State, ancho int) string {
 	b.WriteString("\n")
 	b.WriteString(styles.Ayuda.Render("  HTTPS:  https://github.com/usuario/tema.git"))
 	b.WriteString("\n")
-	b.WriteString(styles.Ayuda.Render("  Privado: https://TOKEN@github.com/usuario/tema.git"))
+	b.WriteString(styles.Ayuda.Render("  Privado: git@github.com:usuario/tema.git (recomendado)"))
 	b.WriteString("\n\n")
 
 	if s.Mensaje != "" {

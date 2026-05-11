@@ -103,7 +103,7 @@ func (r *JSONRepository) GuardarTiendas(tiendas []domain.Tienda) error {
 		return err
 	}
 
-	return os.WriteFile(rutaArchivo, datos, 0644)
+	return os.WriteFile(rutaArchivo, datos, 0600)
 }
 
 // CrearDirectorioTienda crea el directorio local para una tienda y retorna su ruta.
