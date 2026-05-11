@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	Version    = "2.1.12"
+	Version    = "2.1.14"
 	JsrScope   = "jacuxx"
 	JsrPackage = "shopify-tui"
 )
